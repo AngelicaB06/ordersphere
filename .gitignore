@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 
-node_modules
-dist
+node_modules/
+dist/
 .env
-.vscode
+backend/firebase/serviceAccountKey.json
