@@ -68,6 +68,7 @@ function BottomNav() {
                 <ul className="space-y-2">
                   {[
                     { label: "Mi Perfil", path: "/perfil" },
+
                     { label: "Configuración", path: "/settings" },
                   ].map(({ label, path }) => (
                     <li key={label}>
