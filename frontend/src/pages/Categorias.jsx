@@ -21,7 +21,7 @@ import {
   FaFolderMinus
 } from "react-icons/fa";
 import Swal from "sweetalert2";
- 
+
 function Categorias() {
   // ==========================
   // ESTADOS
@@ -29,21 +29,22 @@ function Categorias() {
   const [categorias, setCategorias] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [loading, setLoading] = useState(true);
- 
-  // Modal
+
+
+
   const [mostrarModal, setMostrarModal] = useState(false);
   const [categoriaEditando, setCategoriaEditando] = useState(null); // null = crear, objeto = editar
   const [nombreCategoria, setNombreCategoria] = useState("");
   const [cantidadCategoria, setCantidadCategoria] = useState("");
   const [activaCategoria, setActivaCategoria] = useState(true);
- 
+
   // ==========================
   // CARGAR DATOS
   // ==========================
   useEffect(() => {
     cargarCategorias();
   }, []);
- 
+
   const cargarCategorias = async () => {
     try {
       setLoading(true);
@@ -61,14 +62,14 @@ function Categorias() {
       setLoading(false);
     }
   };
- 
+
   // ==========================
   // FILTRAR CATEGORÍAS
   // ==========================
   const categoriasFiltradas = categorias.filter((categoria) =>
     categoria.nombre?.toLowerCase().includes(busqueda.toLowerCase().trim())
   );
- 
+
   // ==========================
   // ABRIR MODAL PARA CREAR
   // ==========================
@@ -79,7 +80,7 @@ function Categorias() {
     setActivaCategoria(true);
     setMostrarModal(true);
   };
- 
+
   // ==========================
   // ABRIR MODAL PARA EDITAR
   // ==========================
@@ -90,7 +91,7 @@ function Categorias() {
     setActivaCategoria(categoria.Activa !== undefined ? categoria.Activa : true);
     setMostrarModal(true);
   };
- 
+
   // ==========================
   // GUARDAR (CREAR O ACTUALIZAR)
   // ==========================
@@ -105,7 +106,7 @@ function Categorias() {
       });
       return;
     }
- 
+
     try {
       if (categoriaEditando) {
         // Actualizar
@@ -134,7 +135,7 @@ function Categorias() {
           confirmButtonColor: "#f97316"
         });
       }
- 
+
       setMostrarModal(false);
       cargarCategorias();
     } catch (error) {
@@ -147,7 +148,7 @@ function Categorias() {
       });
     }
   };
- 
+
   // ==========================
   // ELIMINAR CON CONFIRMACIÓN
   // ==========================
@@ -162,7 +163,7 @@ function Categorias() {
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar"
     });
- 
+
     if (result.isConfirmed) {
       try {
         await eliminarCategoria(id);
@@ -184,7 +185,7 @@ function Categorias() {
       }
     }
   };
- 
+
   // ==========================
   // RENDER
   // ==========================
@@ -213,7 +214,7 @@ function Categorias() {
             </div>
           </div>
         </div>
- 
+
         {/* ESTADÍSTICAS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border-l-4 border-orange-500">
@@ -227,7 +228,7 @@ function Categorias() {
               </div>
             </div>
           </div>
- 
+
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
@@ -241,7 +242,7 @@ function Categorias() {
               </div>
             </div>
           </div>
- 
+
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all duration-300 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
@@ -256,8 +257,7 @@ function Categorias() {
             </div>
           </div>
         </div>
- 
-        {/* TABLA */}
+
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md overflow-hidden">
           <div className="p-6 border-b border-slate-100 dark:border-slate-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -371,7 +371,7 @@ function Categorias() {
           </div>
         </div>
       </div>
- 
+
       {/* ==========================
           MODAL PARA CREAR/EDITAR
       ========================== */}
@@ -399,7 +399,7 @@ function Categorias() {
                 <FaTimes className="text-slate-500" />
               </button>
             </div>
- 
+
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -426,7 +426,7 @@ function Categorias() {
                   min="0"
                 />
               </div>
- 
+
               {/* Toggle de estado */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -460,7 +460,8 @@ function Categorias() {
                 </div>
               </div>
             </div>
- 
+
+
             <div className="p-6 bg-slate-50 dark:bg-slate-700/30 rounded-b-3xl flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setMostrarModal(false)}
@@ -478,7 +479,7 @@ function Categorias() {
           </div>
         </div>
       )}
- 
+
       {/* Animación modal */}
       <style jsx>{`
         @keyframes fadeIn {
