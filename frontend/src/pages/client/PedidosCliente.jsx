@@ -1,8 +1,11 @@
-import BottomNav from "../components/client/BottomNav";
+import BottomNav from "../../components/client/BottomNav";
+import HeaderCliente from "../../components/client/HeaderCliente";
 
 function PedidosCliente() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6 pb-28">
+    <div className="min-h-screen bg-linear-to-br from-slate-100 via-orange-50 to-red-50 pb-28">
+      <HeaderCliente />
+      <div className="p-8 space-y-8">
 
       {/* Hero */}
       <div
@@ -203,8 +206,8 @@ function PedidosCliente() {
       </div>
 
       {/* Navegación inferior */}
+      </div>
       <BottomNav />
-
     </div>
   );
 }

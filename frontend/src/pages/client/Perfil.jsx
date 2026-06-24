@@ -1,4 +1,16 @@
 import BottomNav from "../../components/client/BottomNav";
+import HeaderCliente from "../../components/client/HeaderCliente";
+import { 
+  LogOut, 
+  User, 
+  Mail, 
+  Shield, 
+  CircleDot,
+  UserCircle,
+  Activity,
+  BadgeCheck
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Perfil() {
 
@@ -45,8 +57,11 @@ function Perfil() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6 pb-28">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-28">
 
+    <HeaderCliente />
+
+    <div className="p-6">
       {/* ==========================
           ENCABEZADO
       ========================== */}
@@ -214,7 +229,9 @@ function Perfil() {
       </div>
 
       {/* MENÚ INFERIOR SOLO CLIENTE */}
+       </div>
       {!esAdmin && (
+         
         <BottomNav />
       )}
 
@@ -223,4 +240,4 @@ function Perfil() {
   );
 }
 
-export default Perfil;
+export default Perfil; 

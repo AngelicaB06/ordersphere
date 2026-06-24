@@ -1,19 +1,98 @@
-import { Bell, ShoppingCart, User } from "lucide-react";
+import {
+  Bell,
+  ShoppingCart,
+  User
+} from "lucide-react";
+
+import {
+  useEffect,
+  useState
+} from "react";
 
 function HeaderCliente() {
-  return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
 
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+  const [usuario, setUsuario] =
+    useState(null);
+
+  const [cantidadCarrito,
+    setCantidadCarrito] =
+    useState(0);
+
+  useEffect(() => {
+
+    const usuarioGuardado =
+      JSON.parse(
+        localStorage.getItem("usuario")
+      );
+
+    if (usuarioGuardado) {
+
+      setUsuario(usuarioGuardado);
+
+    }
+
+    const carrito =
+      JSON.parse(
+        localStorage.getItem("carrito")
+      ) || [];
+
+    const totalProductos =
+      carrito.reduce(
+        (acc, producto) =>
+          acc + (producto.cantidad || 1),
+        0
+      );
+
+    setCantidadCarrito(
+      totalProductos
+    );
+
+  }, []);
+
+  return (
+
+    <header
+      className="
+        bg-white
+        shadow-md
+        sticky
+        top-0
+        z-50
+      "
+    >
+
+      <div
+        className="
+          max-w-7xl
+          mx-auto
+          px-6
+          py-4
+          flex
+          justify-between
+          items-center
+        "
+      >
 
         <div>
 
           <h1 className="text-4xl font-black">
-            🍔 <span className="text-orange-500">OrderSphere</span>
+
+            🍔
+
+            <span className="text-orange-500 ml-2">
+              OrderSphere
+            </span>
+
           </h1>
 
           <p className="text-slate-500">
-            Hola 👋 ¿Qué deseas ordenar hoy?
+
+            Hola 👋
+
+            {" "}
+
+            {usuario?.nombre || "Cliente"}
+
           </p>
 
         </div>
@@ -24,7 +103,17 @@ function HeaderCliente() {
 
             <Bell size={24} />
 
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+            <span
+              className="
+                absolute
+                -top-1
+                -right-1
+                w-3
+                h-3
+                bg-red-500
+                rounded-full
+              "
+            />
 
           </button>
 
@@ -48,7 +137,9 @@ function HeaderCliente() {
                 justify-center
               "
             >
-              0
+
+              {cantidadCarrito}
+
             </span>
 
           </button>
@@ -65,7 +156,9 @@ function HeaderCliente() {
               text-white
             "
           >
+
             <User />
+
           </div>
 
         </div>
@@ -73,7 +166,9 @@ function HeaderCliente() {
       </div>
 
     </header>
+
   );
+
 }
 
 export default HeaderCliente;
