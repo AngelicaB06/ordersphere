@@ -30,7 +30,8 @@ function Categorias() {
   const [busqueda, setBusqueda] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Modal
+
+
   const [mostrarModal, setMostrarModal] = useState(false);
   const [categoriaEditando, setCategoriaEditando] = useState(null); // null = crear, objeto = editar
   const [nombreCategoria, setNombreCategoria] = useState("");
@@ -257,7 +258,6 @@ function Categorias() {
           </div>
         </div>
 
-        {/* TABLA */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md overflow-hidden">
           <div className="p-6 border-b border-slate-100 dark:border-slate-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -288,7 +288,7 @@ function Categorias() {
               </div>
             </div>
           </div>
-
+ 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50 dark:bg-slate-700/50">
@@ -461,6 +461,7 @@ function Categorias() {
               </div>
             </div>
 
+
             <div className="p-6 bg-slate-50 dark:bg-slate-700/30 rounded-b-3xl flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setMostrarModal(false)}
@@ -492,5 +493,5 @@ function Categorias() {
     </Layout>
   );
 }
-
+ 
 export default Categorias;

@@ -29,6 +29,10 @@ localStorage.setItem(
   JSON.stringify(carritoActual)
 );
 
+window.dispatchEvent(
+  new Event("carritoActualizado")
+);
+
 alert(
   `${cantidad} ${nombre} agregado(s) al carrito 🛒`
 );
@@ -81,50 +85,73 @@ return (
 
     </div>
 
-    <div className="flex items-center justify-center gap-4 mt-5">
+    <div className="flex items-center justify-center mt-4">
 
-      <button
-        onClick={() =>
-          setCantidad(
-            cantidad > 1
-              ? cantidad - 1
-              : 1
-          )
-        }
-        className="
-          w-10
-          h-10
-          rounded-xl
-          bg-slate-200
-          font-bold
-          text-lg
-        "
-      >
-        -
-      </button>
+  <div
+    className="
+      flex
+      items-center
+      bg-slate-100
+      rounded-full
+      px-2
+      py-1
+      shadow-sm
+    "
+  >
 
-      <span className="text-xl font-bold w-8 text-center">
-        {cantidad}
-      </span>
+    <button
+      onClick={() =>
+        setCantidad(
+          cantidad > 1
+            ? cantidad - 1
+            : 1
+        )
+      }
+      className="
+        w-8
+        h-8
+        rounded-full
+        bg-white
+        font-bold
+        shadow
+        hover:bg-slate-50
+      "
+    >
+      −
+    </button>
 
-      <button
-        onClick={() =>
-          setCantidad(cantidad + 1)
-        }
-        className="
-          w-10
-          h-10
-          rounded-xl
-          bg-orange-500
-          text-white
-          font-bold
-          text-lg
-        "
-      >
-        +
-      </button>
+    <span
+      className="
+        w-8
+        text-center
+        font-bold
+        text-lg
+      "
+    >
+      {cantidad}
+    </span>
 
-    </div>
+    <button
+      onClick={() =>
+        setCantidad(cantidad + 1)
+      }
+      className="
+        w-8
+        h-8
+        rounded-full
+        bg-orange-500
+        text-white
+        font-bold
+        shadow
+        hover:bg-orange-600
+      "
+    >
+      +
+    </button>
+
+  </div>
+
+</div>
 
     <button
       onClick={agregarAlCarrito}
