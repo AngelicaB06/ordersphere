@@ -1,4 +1,3 @@
-
 import {
   collection,
   addDoc,
@@ -91,4 +90,3 @@ export const eliminarProducto = async (
   );
 
 };
-

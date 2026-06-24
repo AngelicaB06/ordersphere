@@ -1,15 +1,4 @@
 import BottomNav from "../../components/client/BottomNav";
-import { 
-  LogOut, 
-  User, 
-  Mail, 
-  Shield, 
-  CircleDot,
-  UserCircle,
-  Activity,
-  BadgeCheck
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 function Perfil() {
 
@@ -234,4 +223,4 @@ function Perfil() {
   );
 }
 
-export default Perfil; 
+export default Perfil;

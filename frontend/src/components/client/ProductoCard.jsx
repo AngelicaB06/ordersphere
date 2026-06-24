@@ -39,7 +39,7 @@ setCantidad(1);
 
 return (
 
-```
+
 <div
   className="
     bg-white
@@ -145,7 +145,7 @@ return (
   </div>
 
 </div>
-```
+
 
 );
 

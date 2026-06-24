@@ -88,7 +88,6 @@ return ( <div className="relative min-h-screen overflow-hidden bg-[#050816] flex
       animate-pulse
     "
   />
-
   {/* Glow morado */}
   <div
     className="
