@@ -6,11 +6,63 @@ import {
   User
 } from "lucide-react";
 
-import { useNavigate, useLocation } from "react-router-dom";
+import {
+  useNavigate,
+  useLocation
+} from "react-router-dom";
+
+import {
+  useState,
+  useEffect
+} from "react";
 
 function BottomNav() {
+
   const navigate = useNavigate();
+
   const location = useLocation();
+
+  const [cantidadCarrito,
+    setCantidadCarrito] =
+    useState(0);
+
+  useEffect(() => {
+
+    const actualizarCarrito = () => {
+
+      const carrito =
+        JSON.parse(
+          localStorage.getItem("carrito")
+        ) || [];
+
+      const total =
+        carrito.reduce(
+          (acc, producto) =>
+            acc + (producto.cantidad || 1),
+          0
+        );
+
+      setCantidadCarrito(total);
+
+    };
+
+    actualizarCarrito();
+
+    window.addEventListener(
+      "carritoActualizado",
+      actualizarCarrito
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        "carritoActualizado",
+        actualizarCarrito
+      );
+
+    };
+
+  }, []);
 
   const menu = [
     {
@@ -27,7 +79,7 @@ function BottomNav() {
       icon: <ShoppingCart size={24} />,
       name: "Carrito",
       path: "/carrito",
-      badge: 0
+      badge: cantidadCarrito
     },
     {
       icon: <Package size={24} />,
@@ -42,6 +94,7 @@ function BottomNav() {
   ];
 
   return (
+
     <div
       className="
         fixed
@@ -58,10 +111,14 @@ function BottomNav() {
         z-50
       "
     >
+
       {menu.map((item) => (
+
         <button
           key={item.path}
-          onClick={() => navigate(item.path)}
+          onClick={() =>
+            navigate(item.path)
+          }
           title={item.name}
           className={`
             relative
@@ -78,9 +135,11 @@ function BottomNav() {
             }
           `}
         >
+
           {item.icon}
 
-          {item.badge !== undefined && (
+          {item.badge > 0 && (
+
             <span
               className="
                 absolute
@@ -97,17 +156,27 @@ function BottomNav() {
                 justify-center
               "
             >
+
               {item.badge}
+
             </span>
+
           )}
 
           <span className="text-[10px] mt-1">
+
             {item.name}
+
           </span>
+
         </button>
+
       ))}
+
     </div>
+
   );
+
 }
 
 export default BottomNav;

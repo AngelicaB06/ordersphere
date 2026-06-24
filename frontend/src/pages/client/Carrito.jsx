@@ -46,122 +46,187 @@ function Carrito() {
 
   return (
 
-    <div className="min-h-screen bg-linear-to-br from-slate-100 via-orange-50 to-red-50 pb-28">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 pb-28">
 
       <HeaderCliente />
 
-      <div className="p-8 space-y-8">
+      <div className="max-w-7xl mx-auto p-8 space-y-8">
 
-        {/* Encabezado */}
+        {/* ENCABEZADO */}
+
         <div
           className="
             bg-gradient-to-r
             from-orange-500
-            to-orange-600
-            rounded-3xl
-            p-8
+            via-orange-600
+            to-red-500
+            rounded-[32px]
+            p-10
             text-white
-            shadow-lg
+            shadow-2xl
           "
         >
 
-          <h2 className="text-4xl font-bold">
+          <h2 className="text-5xl font-black">
             🛒 Mi Carrito
           </h2>
 
           <p className="mt-3 text-orange-100 text-lg">
-            Revisa tus productos antes de realizar el pedido.
+            Revisa tus productos antes de confirmar tu pedido.
           </p>
 
         </div>
 
-        {/* Contenido */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* CONTENIDO */}
 
-          {/* Productos */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+          {/* PRODUCTOS */}
+
           <div
             className="
               xl:col-span-2
               bg-white
               rounded-3xl
-              p-6
-              shadow-sm
+              p-8
+              shadow-xl
             "
           >
 
-            <h3
-              className="
-                text-2xl
-                font-bold
-                text-slate-800
-                mb-6
-              "
-            >
-              📦 Productos
-            </h3>
+            <div className="flex items-center justify-between mb-8">
+
+              <h3
+                className="
+                  text-3xl
+                  font-bold
+                  text-slate-800
+                "
+              >
+                📦 Productos
+              </h3>
+
+              <div
+                className="
+                  bg-orange-100
+                  text-orange-600
+                  px-4
+                  py-2
+                  rounded-full
+                  font-semibold
+                "
+              >
+                {productos.length} productos
+              </div>
+
+            </div>
 
             {productos.length === 0 && (
 
-              <div className="text-center py-10">
+              <div className="text-center py-20">
 
-                <p className="text-slate-500 text-lg">
-                  Tu carrito está vacío 🛒
+                <div className="text-7xl mb-4">
+                  🛒
+                </div>
+
+                <p className="text-slate-500 text-xl">
+                  Tu carrito está vacío
                 </p>
 
               </div>
 
             )}
 
-            <div className="space-y-5">
+            <div className="space-y-6">
 
               {productos.map((producto) => (
 
                 <div
                   key={producto.id}
                   className="
+                    bg-white
                     border
-                    rounded-2xl
-                    p-5
-                    hover:shadow-md
-                    transition
+                    border-slate-100
+                    rounded-3xl
+                    p-6
+                    shadow-lg
+                    hover:shadow-2xl
+                    transition-all
+                    duration-300
                     flex
                     justify-between
                     items-center
                   "
                 >
 
-                  <div>
+                  <div className="flex items-center gap-5">
 
-                    <h4 className="font-bold text-lg">
-                      {producto.nombre}
-                    </h4>
-
-                    <p className="text-slate-500">
-                      Cantidad: {producto.cantidad}
-                    </p>
-
-                    <p className="text-orange-500 font-bold mt-2">
-                      ${producto.precio}
-                    </p>
-
-                  </div>
-
-                  <div className="text-right">
-
-                    <button
-                      onClick={() =>
-                        eliminarProducto(producto.id)
-                      }
+                    <img
+                      src={producto.imagen}
+                      alt={producto.nombre}
                       className="
-                        text-red-500
-                        text-sm
-                        hover:text-red-700
+                        w-24
+                        h-24
+                        object-cover
+                        rounded-2xl
+                        shadow-md
                       "
-                    >
-                      Eliminar
-                    </button>
+                    />
+
+                    <div>
+
+                      <h4
+                        className="
+                          font-bold
+                          text-xl
+                          text-slate-800
+                        "
+                      >
+                        {producto.nombre}
+                      </h4>
+
+                      <p className="text-slate-500 mt-1">
+                        Cantidad: {producto.cantidad}
+                      </p>
+
+                      <p className="text-slate-500">
+                        ${producto.precio} x {producto.cantidad}
+                      </p>
+
+                      <p
+                        className="
+                          text-orange-500
+                          font-black
+                          text-xl
+                          mt-2
+                        "
+                      >
+                        $
+                        {producto.precio *
+                          producto.cantidad}
+                      </p>
+
+                    </div>
 
                   </div>
+
+                  <button
+                    onClick={() =>
+                      eliminarProducto(producto.id)
+                    }
+                    className="
+                      bg-red-100
+                      text-red-600
+                      px-4
+                      py-2
+                      rounded-xl
+                      font-semibold
+                      hover:bg-red-500
+                      hover:text-white
+                      transition
+                    "
+                  >
+                    Eliminar
+                  </button>
 
                 </div>
 
@@ -171,60 +236,85 @@ function Carrito() {
 
           </div>
 
-          {/* Resumen */}
+          {/* RESUMEN */}
+
           <div
             className="
               bg-white
               rounded-3xl
-              p-6
-              shadow-sm
+              p-8
+              shadow-xl
+              border
+              border-slate-100
               h-fit
+              sticky
+              top-24
             "
           >
 
             <h3
               className="
-                text-2xl
+                text-3xl
                 font-bold
                 text-slate-800
-                mb-6
+                mb-8
               "
             >
               🧾 Resumen
             </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
 
               <div className="flex justify-between">
 
-                <span>Subtotal</span>
+                <span className="text-slate-600">
+                  Subtotal
+                </span>
 
-                <span>${subtotal}</span>
+                <span className="font-bold">
+                  ${subtotal}
+                </span>
 
               </div>
 
               <div className="flex justify-between">
 
-                <span>Envío</span>
+                <span className="text-slate-600">
+                  Envío
+                </span>
 
-                <span>${envio}</span>
+                <span className="font-bold">
+                  ${envio}
+                </span>
 
               </div>
 
-              <hr />
+              <hr className="my-4" />
 
               <div
                 className="
                   flex
                   justify-between
-                  text-xl
-                  font-bold
+                  items-center
                 "
               >
 
-                <span>Total</span>
+                <span
+                  className="
+                    text-2xl
+                    font-bold
+                  "
+                >
+                  Total
+                </span>
 
-                <span className="text-orange-500">
+                <span
+                  className="
+                    text-3xl
+                    font-black
+                    text-orange-500
+                  "
+                >
                   ${total}
                 </span>
 
@@ -233,16 +323,23 @@ function Carrito() {
               <button
                 className="
                   w-full
-                  bg-orange-500
+                  mt-6
+                  bg-gradient-to-r
+                  from-orange-500
+                  to-red-500
                   text-white
                   py-4
                   rounded-2xl
                   font-bold
-                  hover:bg-orange-600
-                  transition
+                  text-lg
+                  shadow-lg
+                  hover:shadow-2xl
+                  hover:scale-105
+                  transition-all
+                  duration-300
                 "
               >
-                Confirmar Pedido
+                🚀 Confirmar Pedido
               </button>
 
             </div>

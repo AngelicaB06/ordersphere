@@ -29,6 +29,10 @@ localStorage.setItem(
   JSON.stringify(carritoActual)
 );
 
+window.dispatchEvent(
+  new Event("carritoActualizado")
+);
+
 alert(
   `${cantidad} ${nombre} agregado(s) al carrito 🛒`
 );

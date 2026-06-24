@@ -9,7 +9,13 @@ import {
   useState
 } from "react";
 
+import {
+  useNavigate
+} from "react-router-dom";
+
 function HeaderCliente() {
+
+  const navigate = useNavigate();
 
   const [usuario, setUsuario] =
     useState(null);
@@ -31,21 +37,39 @@ function HeaderCliente() {
 
     }
 
-    const carrito =
-      JSON.parse(
-        localStorage.getItem("carrito")
-      ) || [];
+    const actualizarCarrito = () => {
 
-    const totalProductos =
-      carrito.reduce(
-        (acc, producto) =>
-          acc + (producto.cantidad || 1),
-        0
+      const carrito =
+        JSON.parse(
+          localStorage.getItem("carrito")
+        ) || [];
+
+      const total =
+        carrito.reduce(
+          (acc, producto) =>
+            acc + (producto.cantidad || 1),
+          0
+        );
+
+      setCantidadCarrito(total);
+
+    };
+
+    actualizarCarrito();
+
+    window.addEventListener(
+      "carritoActualizado",
+      actualizarCarrito
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        "carritoActualizado",
+        actualizarCarrito
       );
 
-    setCantidadCarrito(
-      totalProductos
-    );
+    };
 
   }, []);
 
@@ -87,9 +111,7 @@ function HeaderCliente() {
 
           <p className="text-slate-500">
 
-            Hola 👋
-
-            {" "}
+            Hola 👋{" "}
 
             {usuario?.nombre || "Cliente"}
 
@@ -98,6 +120,8 @@ function HeaderCliente() {
         </div>
 
         <div className="flex items-center gap-6">
+
+          {/* Notificaciones */}
 
           <button className="relative">
 
@@ -117,49 +141,71 @@ function HeaderCliente() {
 
           </button>
 
-          <button className="relative">
+          {/* Carrito */}
+
+          <button
+            className="relative"
+            onClick={() =>
+              navigate("/carrito")
+            }
+          >
 
             <ShoppingCart size={26} />
 
-            <span
-              className="
-                absolute
-                -top-2
-                -right-2
-                bg-orange-500
-                text-white
-                text-xs
-                w-5
-                h-5
-                rounded-full
-                flex
-                items-center
-                justify-center
-              "
-            >
+            {cantidadCarrito > 0 && (
 
-              {cantidadCarrito}
+              <span
+                className="
+                  absolute
+                  -top-2
+                  -right-2
+                  bg-orange-500
+                  text-white
+                  text-xs
+                  w-5
+                  h-5
+                  rounded-full
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
 
-            </span>
+                {cantidadCarrito}
+
+              </span>
+
+            )}
 
           </button>
 
-          <div
-            className="
-              w-12
-              h-12
-              rounded-full
-              bg-orange-500
-              flex
-              items-center
-              justify-center
-              text-white
-            "
-          >
+          {/* Usuario */}
 
-            <User />
-
-          </div>
+          <button
+  onClick={() => navigate("/perfil")}
+  className="
+    w-12
+    h-12
+    rounded-full
+    bg-gradient-to-r
+    from-orange-500
+    to-red-500
+    flex
+    items-center
+    justify-center
+    text-white
+    font-bold
+    text-lg
+    hover:scale-110
+    transition-all
+    duration-300
+    shadow-lg
+  "
+>
+  {usuario?.nombre
+    ? usuario.nombre.charAt(0).toUpperCase()
+    : "U"}
+</button>
 
         </div>
 
