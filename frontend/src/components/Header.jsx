@@ -1,4 +1,4 @@
-import { Search, Bell, Moon, Sun, User } from "lucide-react";
+import { Bell, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
 function Header() {
@@ -8,35 +8,7 @@ function Header() {
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-8 py-4">
 
-      <div className="flex items-center justify-between">
-
-        {/* Buscador */}
-        <div className="relative w-96">
-
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-
-          <input
-            type="text"
-            placeholder="Buscar productos, pedidos..."
-            className="
-              w-full
-              pl-11
-              pr-4
-              py-3
-              rounded-2xl
-              bg-slate-100
-              dark:bg-slate-800
-              dark:text-white
-              focus:outline-none
-              focus:ring-2
-              focus:ring-orange-500
-            "
-          />
-
-        </div>
+      <div className="flex items-center justify-end"> {/* Cambiamos a justify-end para alinear a la derecha */}
 
         {/* Acciones */}
         <div className="flex items-center gap-4">
