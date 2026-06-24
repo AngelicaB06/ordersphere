@@ -132,7 +132,7 @@ function Clientes() {
                     <td className="py-4 font-medium">
                       Juan Pérez
                     </td>
-                    <td>juan@email.com</td>
+                    <td></td>
                     <td>24</td>
                     <td>
                       <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">

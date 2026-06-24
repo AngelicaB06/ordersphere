@@ -2,32 +2,29 @@ jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+// =====================================
+// ICONOS
+// =====================================
+
 import {
   Bell,
   Moon,
   User
 } from "lucide-react";
 
+// =====================================
+// FIREBASE
+// =====================================
+
 import { logoutUser } from "../firebase/auth";
 
-function Header() {
-
-  // ==========================
-  // NAVEGACIÓN
-  // ==========================
+export default function Header() {
 
   const navigate = useNavigate();
-
-  // ==========================
-  // ESTADOS
-  // ==========================
 
   const [mostrarPerfil, setMostrarPerfil] =
     useState(false);
 
-  // ==========================
-  // CERRAR SESIÓN
-  // ==========================
 
   const cerrarSesion = async () => {
 
@@ -44,6 +41,7 @@ function Header() {
     }
 
   };
+
 
   return (
 
@@ -63,10 +61,6 @@ function Header() {
       "
     >
 
-      {/* ==========================
-          NOTIFICACIONES
-      ========================== */}
-
       <button
         className="
           w-14
@@ -83,9 +77,6 @@ function Header() {
         <Bell size={22} />
       </button>
 
-      {/* ==========================
-          MODO OSCURO
-      ========================== */}
 
       <button
         className="
@@ -103,9 +94,7 @@ function Header() {
         <Moon size={22} />
       </button>
 
-      {/* ==========================
-          PERFIL ADMINISTRADOR
-      ========================== */}
+
 
       <div className="relative">
 
@@ -139,16 +128,10 @@ function Header() {
             <User size={26} />
           </div>
 
-          {/* Información */}
 
           <div>
 
-            <h3
-              className="
-                text-xl
-                font-bold
-              "
-            >
+            <h3 className="text-xl font-bold">
               Administrador
             </h3>
 
@@ -165,9 +148,7 @@ function Header() {
 
         </button>
 
-        {/* ==========================
-            MENÚ DESPLEGABLE
-        ========================== */}
+
 
         {mostrarPerfil && (
 
@@ -215,21 +196,11 @@ function Header() {
 
               <div>
 
-                <h3
-                  className="
-                    font-bold
-                    text-lg
-                  "
-                >
+                <h3 className="font-bold text-lg">
                   Administrador
                 </h3>
 
-                <p
-                  className="
-                    text-slate-500
-                    text-sm
-                  "
-                >
+                <p className="text-slate-500 text-sm">
                   admin@ordersphere.com
                 </p>
 
@@ -276,7 +247,7 @@ function Header() {
               ⚙️ Configuración
             </button>
 
-            {/* Cerrar sesión */}
+
 
             <button
               onClick={cerrarSesion}
@@ -304,5 +275,3 @@ function Header() {
   );
 
 }
-
-export default Header;

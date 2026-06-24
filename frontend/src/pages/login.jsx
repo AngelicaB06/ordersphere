@@ -20,28 +20,35 @@ const handleLogin = async () => {
     setError("");
     setLoading(true);
 
-    console.log("Intentando login...");
-
     const result = await loginUser(
       email,
       password
     );
 
-    console.log("RESULTADO:", result);
-
     const rol = result.data.rol;
 
-    console.log("ROL:", rol);
+    localStorage.setItem(
+      "rol",
+      rol
+    );
+
+    localStorage.setItem(
+      "nombre",
+      result.data.nombre || "Usuario"
+    );
+
+    localStorage.setItem(
+      "correo",
+      result.data.Correo ||
+      result.data.correo ||
+      email
+    );
 
     if (rol === "admin") {
-
-      console.log("Entrando a Dashboard");
 
       navigate("/dashboard");
 
     } else {
-
-      console.log("Entrando a Menu");
 
       navigate("/menu");
 
@@ -49,7 +56,7 @@ const handleLogin = async () => {
 
   } catch (error) {
 
-    console.error("ERROR LOGIN:", error);
+    console.error(error);
 
     setError(
       error.message ||
@@ -63,6 +70,7 @@ const handleLogin = async () => {
   }
 
 };
+
 return ( <div className="relative min-h-screen overflow-hidden bg-[#050816] flex items-center justify-center">
 
 
