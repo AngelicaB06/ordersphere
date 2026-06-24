@@ -232,7 +232,6 @@ function Perfil() {
     </div>
 
   );
-
 }
 
 export default Perfil;
