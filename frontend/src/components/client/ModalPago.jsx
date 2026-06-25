@@ -187,7 +187,7 @@ function ModalPago({ total, carrito, productos, onClose, onFinish }) {
           nombre_receptor: form.nombre_receptor,
           telefono: form.telefono,
         },
-        estado: "Pagado",
+        estado: "pendiente",
         pago: {
           metodo: "tarjeta",
           estado: "completado",
@@ -210,7 +210,7 @@ function ModalPago({ total, carrito, productos, onClose, onFinish }) {
 
       // Actualizar carrito
       await updateDoc(doc(db, "carritos", carrito.id), {
-        estado: "pagado",
+        estado: "pendiente",
         pago: "completado",
       });
 

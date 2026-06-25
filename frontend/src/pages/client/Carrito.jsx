@@ -376,7 +376,7 @@ function Carrito() {
             <button
               onClick={() => {
                 setPedidoCompletado(null);
-                window.location.href = "/productos";
+                window.location.href = "/menu";
               }}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-colors"
             >
