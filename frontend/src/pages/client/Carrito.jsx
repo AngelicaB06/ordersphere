@@ -22,7 +22,9 @@ import {
   User,
   Menu as MenuIcon,
   X,
-  ChevronRight
+  ChevronRight,
+  Receipt,
+  Check
 } from "lucide-react";
 import BottomNav from "../../components/client/BottomNav";
 import ModalPago from "../../components/client/ModalPago";
@@ -354,36 +356,96 @@ function Carrito() {
         ))}
       </div>
 
-      {/* RESUMEN */}
+      {/* RESUMEN / TICKET */}
       <div className="p-4">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="font-bold text-lg mb-4">Resumen de compra</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between text-gray-600">
-              <span>Subtotal ({productos.length} productos)</span>
-              <span>${subtotal.toFixed(2)}</span>
+        <div className="relative bg-white rounded-2xl shadow-md overflow-hidden max-w-md mx-auto">
+
+          {/* Borde superior decorativo tipo "recibo" */}
+          <div className="h-2 bg-linear-to-r from-orange-400 via-orange-500 to-amber-500" />
+
+          <div className="px-6 pt-6 pb-2 text-center border-b border-dashed border-slate-200">
+            <div className="w-12 h-12 mx-auto rounded-full bg-orange-50 flex items-center justify-center mb-2">
+              <Receipt className="w-6 h-6 text-orange-500" />
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Envío</span>
-              <span>{envio > 0 ? `$${envio.toFixed(2)}` : "Gratis"}</span>
-            </div>
-            <div className="border-t pt-2 mt-2">
-              <div className="flex justify-between font-bold text-xl">
-                <span>Total</span>
-                <span className="text-orange-500">${total.toFixed(2)}</span>
+            <h2 className="font-black text-slate-900 text-lg tracking-tight">
+              Resumen de tu pedido
+            </h2>
+            <p className="text-slate-400 text-xs mt-1">
+              OrderSphere · {new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}
+            </p>
+          </div>
+
+          {/* Detalle de productos estilo ticket */}
+          <div className="px-6 py-4 space-y-2">
+            {productos.map((p) => (
+              <div key={p.id} className="flex justify-between items-start text-sm">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="text-slate-700 font-medium truncate">
+                    {p.cantidad}x {p.nombre}
+                  </p>
+                  <p className="text-slate-400 text-xs">
+                    ${p.precio.toFixed(2)} c/u
+                  </p>
+                </div>
+                <span className="text-slate-700 font-semibold whitespace-nowrap">
+                  ${(p.precio * p.cantidad).toFixed(2)}
+                </span>
               </div>
+            ))}
+          </div>
+
+          {/* Línea punteada divisoria */}
+          <div className="px-6">
+            <div className="border-t border-dashed border-slate-200" />
+          </div>
+
+          <div className="px-6 py-4 space-y-2">
+            <div className="flex justify-between text-sm text-slate-500">
+              <span>Subtotal ({productos.length} {productos.length === 1 ? "producto" : "productos"})</span>
+              <span className="font-medium text-slate-700">${subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-slate-500">
+              <span>Envío</span>
+              <span className="font-medium text-slate-700">
+                {envio > 0 ? `$${envio.toFixed(2)}` : "Gratis"}
+              </span>
             </div>
           </div>
-          <button
-            onClick={() => setModalPagoAbierto(true)}
-            className="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 group"
-          >
-            <span>Proceder al pago</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
-          <p className="text-xs text-gray-400 text-center mt-3">
-            🔒 Transacción segura. Tus datos están protegidos.
-          </p>
+
+          {/* Total destacado */}
+          <div className="px-6 py-4 bg-orange-50/70 border-t border-dashed border-orange-200">
+            <div className="flex justify-between items-center">
+              <span className="font-black text-slate-900 text-lg tracking-tight">Total</span>
+              <span className="font-black text-2xl text-orange-500 tracking-tight">
+                ${total.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <div className="px-6 pb-6 pt-4">
+            <button
+              onClick={() => setModalPagoAbierto(true)}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 group hover:shadow-lg hover:-translate-y-0.5"
+            >
+              <span>Proceder al pago</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <p className="text-xs text-gray-400 text-center mt-3 flex items-center justify-center gap-1.5">
+              🔒 Transacción segura. Tus datos están protegidos.
+            </p>
+          </div>
+
+          {/* Borde inferior festoneado tipo recibo (zigzag) */}
+          <div
+            className="h-3 w-full"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, white 50%, transparent 50%), linear-gradient(45deg, white 50%, transparent 50%)",
+              backgroundSize: "16px 16px",
+              backgroundPosition: "0 0, 0 0",
+              backgroundColor: "transparent",
+            }}
+          />
         </div>
       </div>
 
@@ -398,26 +460,41 @@ function Carrito() {
       )}
 
       {pedidoCompletado && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative bg-white rounded-2xl max-w-md w-full text-center shadow-2xl overflow-hidden">
+
+            <div className="h-2 bg-linear-to-r from-green-400 via-green-500 to-emerald-500" />
+
+            <div className="p-8">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-10 h-10 text-green-500" strokeWidth={3} />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+                ¡Pedido confirmado!
+              </h2>
+
+              <div className="my-5 px-5 py-3 rounded-xl bg-slate-50 border border-dashed border-slate-200 inline-block">
+                <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold">
+                  No. de pedido
+                </p>
+                <p className="text-orange-500 font-black text-xl tracking-tight">
+                  #{pedidoCompletado}
+                </p>
+              </div>
+
+              <p className="text-slate-500 text-sm">
+                Tu pedido ha sido procesado exitosamente.
+              </p>
+              <p className="text-sm text-slate-400 mb-6">
+                Recibirás un correo con los detalles de tu compra.
+              </p>
+              <button
+                onClick={() => { setPedidoCompletado(null); navigate("/menu"); }}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold transition-all hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Continuar comprando
+              </button>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">¡Pedido completado!</h2>
-            <p className="text-gray-500 mb-2">
-              Tu pedido #{pedidoCompletado} ha sido procesado exitosamente.
-            </p>
-            <p className="text-sm text-gray-400 mb-6">
-              Recibirás un correo con los detalles de tu compra.
-            </p>
-            <button
-              onClick={() => { setPedidoCompletado(null); navigate("/menu"); }}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-colors"
-            >
-              Continuar comprando
-            </button>
           </div>
         </div>
       )}
