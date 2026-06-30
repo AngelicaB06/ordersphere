@@ -24,7 +24,9 @@ import {
   X,
   ChevronRight,
   Receipt,
-  Check
+  Check,
+  Banknote,
+  CreditCard
 } from "lucide-react";
 import BottomNav from "../../components/client/BottomNav";
 import ModalPago from "../../components/client/ModalPago";
@@ -35,6 +37,7 @@ function Carrito() {
   const [carrito, setCarrito] = useState(null);
   const [productos, setProductos] = useState([]);
   const [modalPagoAbierto, setModalPagoAbierto] = useState(false);
+  const [metodoPago, setMetodoPago] = useState("efectivo");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [pedidoCompletado, setPedidoCompletado] = useState(null);
@@ -356,11 +359,64 @@ function Carrito() {
         ))}
       </div>
 
+      {/* MÉTODO DE PAGO */}
+      <div className="px-4 mb-2">
+        <div className="bg-white rounded-2xl shadow-sm p-5 max-w-md mx-auto">
+          <h3 className="font-black text-slate-900 text-base mb-3">
+            Método de pago
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setMetodoPago("efectivo")}
+              className={`flex flex-col items-center gap-2 py-4 rounded-xl border-2 transition-all ${
+                metodoPago === "efectivo"
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+            >
+              <Banknote
+                size={24}
+                className={metodoPago === "efectivo" ? "text-orange-500" : "text-slate-400"}
+              />
+              <span className={`text-sm font-bold ${
+                metodoPago === "efectivo" ? "text-orange-600" : "text-slate-600"
+              }`}>
+                Efectivo
+              </span>
+            </button>
+
+            <button
+              onClick={() => setMetodoPago("tarjeta")}
+              className={`flex flex-col items-center gap-2 py-4 rounded-xl border-2 transition-all ${
+                metodoPago === "tarjeta"
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+            >
+              <CreditCard
+                size={24}
+                className={metodoPago === "tarjeta" ? "text-orange-500" : "text-slate-400"}
+              />
+              <span className={`text-sm font-bold ${
+                metodoPago === "tarjeta" ? "text-orange-600" : "text-slate-600"
+              }`}>
+                Tarjeta
+              </span>
+            </button>
+          </div>
+
+          {metodoPago === "efectivo" && (
+            <p className="text-xs text-slate-400 mt-3 text-center">
+              💵 Pagarás en efectivo al recibir tu pedido.
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* RESUMEN / TICKET */}
       <div className="p-4">
         <div className="relative bg-white rounded-2xl shadow-md overflow-hidden max-w-md mx-auto">
 
-          {/* Borde superior decorativo tipo "recibo" */}
           <div className="h-2 bg-linear-to-r from-orange-400 via-orange-500 to-amber-500" />
 
           <div className="px-6 pt-6 pb-2 text-center border-b border-dashed border-slate-200">
@@ -375,7 +431,6 @@ function Carrito() {
             </p>
           </div>
 
-          {/* Detalle de productos estilo ticket */}
           <div className="px-6 py-4 space-y-2">
             {productos.map((p) => (
               <div key={p.id} className="flex justify-between items-start text-sm">
@@ -394,7 +449,6 @@ function Carrito() {
             ))}
           </div>
 
-          {/* Línea punteada divisoria */}
           <div className="px-6">
             <div className="border-t border-dashed border-slate-200" />
           </div>
@@ -410,9 +464,22 @@ function Carrito() {
                 {envio > 0 ? `$${envio.toFixed(2)}` : "Gratis"}
               </span>
             </div>
+            <div className="flex justify-between text-sm text-slate-500">
+              <span>Método de pago</span>
+              <span className="font-medium text-slate-700 flex items-center gap-1.5">
+                {metodoPago === "efectivo" ? (
+                  <>
+                    <Banknote size={14} className="text-orange-500" /> Efectivo
+                  </>
+                ) : (
+                  <>
+                    <CreditCard size={14} className="text-orange-500" /> Tarjeta
+                  </>
+                )}
+              </span>
+            </div>
           </div>
 
-          {/* Total destacado */}
           <div className="px-6 py-4 bg-orange-50/70 border-t border-dashed border-orange-200">
             <div className="flex justify-between items-center">
               <span className="font-black text-slate-900 text-lg tracking-tight">Total</span>
@@ -427,15 +494,16 @@ function Carrito() {
               onClick={() => setModalPagoAbierto(true)}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 group hover:shadow-lg hover:-translate-y-0.5"
             >
-              <span>Proceder al pago</span>
+              <span>{metodoPago === "efectivo" ? "Confirmar pedido" : "Proceder al pago"}</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
             <p className="text-xs text-gray-400 text-center mt-3 flex items-center justify-center gap-1.5">
-              🔒 Transacción segura. Tus datos están protegidos.
+              {metodoPago === "efectivo"
+                ? "💵 Pago contra entrega."
+                : "🔒 Transacción segura. Tus datos están protegidos."}
             </p>
           </div>
 
-          {/* Borde inferior festoneado tipo recibo (zigzag) */}
           <div
             className="h-3 w-full"
             style={{
@@ -454,6 +522,7 @@ function Carrito() {
           total={total}
           carrito={carrito}
           productos={productos}
+          metodoPago={metodoPago}
           onClose={() => setModalPagoAbierto(false)}
           onFinish={handlePagoCompletado}
         />
@@ -463,7 +532,7 @@ function Carrito() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative bg-white rounded-2xl max-w-md w-full text-center shadow-2xl overflow-hidden">
 
-            <div className="h-2 bg-linear-to-r from-green-400 via-green-500 to-emerald-500" />
+            <div className="h-2 bg-gradient-to-r from-green-400 via-green-500 to-emerald-500" />
 
             <div className="p-8">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -483,7 +552,9 @@ function Carrito() {
               </div>
 
               <p className="text-slate-500 text-sm">
-                Tu pedido ha sido procesado exitosamente.
+                {metodoPago === "efectivo"
+                  ? "Tu pedido está confirmado. Paga en efectivo al recibirlo."
+                  : "Tu pedido ha sido procesado exitosamente."}
               </p>
               <p className="text-sm text-slate-400 mb-6">
                 Recibirás un correo con los detalles de tu compra.

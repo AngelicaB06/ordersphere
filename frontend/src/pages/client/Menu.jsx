@@ -12,6 +12,7 @@ function Menu() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
 
   useEffect(() => {
     const cargarProductos = async () => {
@@ -30,6 +31,10 @@ function Menu() {
     cargarProductos();
   }, []);
 
+  const productosFiltrados = categoriaSeleccionada
+    ? productos.filter((p) => p.categoria === categoriaSeleccionada)
+    : productos;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-100 via-orange-50 to-red-50">
@@ -44,7 +49,7 @@ function Menu() {
     <div className="min-h-screen bg-linear-to-br from-slate-100 via-orange-50 to-red-50 relative overflow-hidden pb-28">
 
       {/* NAVBAR */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-4 border-b border-slate-200 backdrop-blur-md bg-white/70 sticky top-0">
+      <nav className="relative z-50 flex items-center justify-between px-6 py-4 border-b border-slate-200 backdrop-blur-md bg-white/70 top-0">
         <div className="flex items-center gap-2 text-xl font-black text-slate-900 tracking-tight">
           🍔 Order<span className="text-orange-500">Sphere</span>
         </div>
@@ -110,16 +115,31 @@ function Menu() {
           <h2 className="text-xl font-black text-slate-900 mb-4 tracking-tight">
             🍽 Categorías
           </h2>
-          <CategoriasCliente />
+          <CategoriasCliente
+            categoriaActiva={categoriaSeleccionada}
+            onSeleccionar={setCategoriaSeleccionada}
+          />
         </div>
 
         <div>
-          <h2 className="text-xl font-black text-slate-900 mb-4 tracking-tight">
-            🔥 Productos Populares
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              {categoriaSeleccionada
+                ? `🍽 ${categoriaSeleccionada}`
+                : "🔥 Productos Populares"}
+            </h2>
+            {categoriaSeleccionada && (
+              <button
+                onClick={() => setCategoriaSeleccionada(null)}
+                className="text-orange-500 text-sm font-semibold hover:text-orange-600 transition-colors"
+              >
+                Ver todos
+              </button>
+            )}
+          </div>
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {productos.length > 0 ? (
-              productos.map((producto) => (
+            {productosFiltrados.length > 0 ? (
+              productosFiltrados.map((producto) => (
                 <ProductoCard
                   key={producto.id}
                   id={producto.id}
@@ -132,7 +152,9 @@ function Menu() {
             ) : (
               <div className="col-span-full text-center py-10">
                 <p className="text-slate-400">
-                  No hay productos registrados.
+                  {categoriaSeleccionada
+                    ? `No hay productos en "${categoriaSeleccionada}".`
+                    : "No hay productos registrados."}
                 </p>
               </div>
             )}

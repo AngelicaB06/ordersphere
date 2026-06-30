@@ -14,6 +14,7 @@ import {
 
 import BottomNav from "../../components/client/BottomNav";
 import { obtenerProductos } from "../../firebase/productos";
+import { obtenerCategorias } from "../../firebase/categorias";
 import ProductoCard from "../../components/client/ProductoCard";
 
 function Inicio() {
@@ -21,7 +22,9 @@ function Inicio() {
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
 
   useEffect(() => {
     const cargarProductos = async () => {
@@ -38,11 +41,27 @@ function Inicio() {
     cargarProductos();
   }, []);
 
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        const data = await obtenerCategorias();
+        const activas = data.filter((c) => c.Activa !== false);
+        setCategorias(activas);
+      } catch (error) {
+        console.error("Error al obtener categorías:", error);
+      } finally {
+        setLoadingCategorias(false);
+      }
+    };
+
+    cargarCategorias();
+  }, []);
+
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-100 via-orange-50 to-red-50 relative overflow-hidden">
 
       {/* NAVBAR */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-4 border-b border-slate-200 backdrop-blur-md bg-white/70 sticky top-0">
+      <nav className="relative z-50 flex items-center justify-between px-6 py-4 border-b border-slate-200 backdrop-blur-md bg-white/70 top-0">
 
         <div className="flex items-center gap-2 text-xl font-black text-slate-900 tracking-tight">
           🍔 Order<span className="text-orange-500">Sphere</span>
@@ -145,37 +164,52 @@ function Inicio() {
             🍽 Categorías
           </h3>
 
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              {
-                img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80",
-                label: "Hamburguesas"
-              },
-              {
-                img: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=200&q=80",
-                label: "Combos"
-              },
-              {
-                img: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&q=80",
-                label: "Bebidas"
-              },
-              {
-                img: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=200&q=80",
-                label: "Postres"
-              },
-            ].map(({ img, label }) => (
-              <div
-                key={label}
-                className="relative rounded-2xl overflow-hidden h-24 hover:scale-105 transition-all duration-300 cursor-pointer"
-              >
-                <img src={img} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40" />
-                <p className="absolute bottom-2 w-full text-center text-white font-bold text-xs">
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
+          {loadingCategorias ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl h-20 bg-slate-200 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : categorias.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {categorias.slice(0, 4).map((categoria) => (
+                <button
+                  key={categoria.id}
+                  onClick={() => navigate("/menu")}
+                  className="
+                    relative
+                    rounded-2xl
+                    h-20
+                    flex
+                    flex-col
+                    items-center
+                    justify-center
+                    gap-1
+                    bg-white/70
+                    border
+                    border-slate-200
+                    hover:border-orange-300
+                    hover:scale-105
+                    hover:shadow-md
+                    transition-all
+                    duration-300
+                  "
+                >
+                  <span className="text-2xl">🍽</span>
+                  <p className="text-slate-700 font-bold text-xs px-2 text-center truncate w-full">
+                    {categoria.nombre}
+                  </p>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 text-sm">
+              No hay categorías registradas.
+            </p>
+          )}
         </div>
 
         {/* PRODUCTOS */}
@@ -206,6 +240,7 @@ function Inicio() {
                     nombre={producto.nombre}
                     precio={producto.precio}
                     imagen={producto.imagen}
+                    descripcion={producto.descripcion}
                   />
                 ))
               ) : (

@@ -17,7 +17,8 @@ import {
   FaSave,
   FaToggleOn,
   FaToggleOff,
-  FaPercentage
+  FaPercentage,
+  FaImage
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
@@ -34,6 +35,7 @@ function Promociones() {
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [descuento, setDescuento] = useState("");
+  const [imagen, setImagen] = useState("");
   const [activa, setActiva] = useState(true);
   const [editando, setEditando] = useState(null); // id de la promoción a editar
 
@@ -78,6 +80,7 @@ function Promociones() {
     setTitulo("");
     setDescripcion("");
     setDescuento("");
+    setImagen("");
     setActiva(true);
     setMostrarModal(true);
   };
@@ -90,6 +93,7 @@ function Promociones() {
     setTitulo(promo.titulo || "");
     setDescripcion(promo.descripcion || "");
     setDescuento(promo.descuento?.toString() || "");
+    setImagen(promo.imagen || "");
     setActiva(promo.activa !== undefined ? promo.activa : true);
     setMostrarModal(true);
   };
@@ -113,6 +117,7 @@ function Promociones() {
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
         descuento: Number(descuento) || 0,
+        imagen: imagen.trim(),
         activa: activa
       };
 
@@ -189,9 +194,9 @@ function Promociones() {
   // ==========================
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6 md:p-8">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-6 md:p-8">
         {/* HERO */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-pink-500 to-rose-600 rounded-3xl p-8 mb-8 text-white shadow-xl">
+        <div className="relative overflow-hidden bg-linear-to-r from-pink-500 to-rose-600 rounded-3xl p-8 mb-8 text-white shadow-xl">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/4"></div>
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -317,37 +322,47 @@ function Promociones() {
                 {promocionesFiltradas.map((promo) => (
                   <div
                     key={promo.id}
-                    className="border rounded-2xl p-5 hover:shadow-md transition-shadow dark:border-slate-700"
+                    className="border rounded-2xl overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700"
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-lg dark:text-white">{promo.titulo}</h4>
-                          {promo.activa !== false ? (
-                            <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-full">Activa</span>
-                          ) : (
-                            <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded-full">Inactiva</span>
-                          )}
+                    {promo.imagen && (
+                      <img
+                        src={promo.imagen}
+                        alt={promo.titulo}
+                        className="w-full h-36 object-cover"
+                        onError={(e) => { e.target.style.display = "none"; }}
+                      />
+                    )}
+                    <div className="p-5">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-lg dark:text-white">{promo.titulo}</h4>
+                            {promo.activa !== false ? (
+                              <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-full">Activa</span>
+                            ) : (
+                              <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded-full">Inactiva</span>
+                            )}
+                          </div>
+                          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{promo.descripcion}</p>
+                          <div className="flex items-center gap-1 mt-2 text-pink-500 font-bold">
+                            <FaPercentage />
+                            <span>{promo.descuento}% OFF</span>
+                          </div>
                         </div>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{promo.descripcion}</p>
-                        <div className="flex items-center gap-1 mt-2 text-pink-500 font-bold">
-                          <FaPercentage />
-                          <span>{promo.descuento}% OFF</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => abrirModalEditar(promo)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
+                          >
+                            <FaEdit size={14} /> Editar
+                          </button>
+                          <button
+                            onClick={() => borrarPromocion(promo.id, promo.titulo)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
+                          >
+                            <FaTrash size={14} /> Eliminar
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => abrirModalEditar(promo)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
-                        >
-                          <FaEdit size={14} /> Editar
-                        </button>
-                        <button
-                          onClick={() => borrarPromocion(promo.id, promo.titulo)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
-                        >
-                          <FaTrash size={14} /> Eliminar
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -361,7 +376,7 @@ function Promociones() {
       {/* MODAL PARA CREAR/EDITAR */}
       {mostrarModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full shadow-2xl transform transition-all animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full shadow-2xl transform transition-all animate-fadeIn max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <h3 className="text-2xl font-bold flex items-center gap-2">
                 {editando ? (
@@ -421,6 +436,28 @@ function Promociones() {
                   className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                   min="0"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <FaImage className="text-pink-500" />
+                  URL de la imagen (opcional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  value={imagen}
+                  onChange={(e) => setImagen(e.target.value)}
+                  className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                />
+                {imagen && (
+                  <img
+                    src={imagen}
+                    alt="Vista previa"
+                    className="w-full h-32 object-cover rounded-xl mt-2 border dark:border-slate-600"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                  />
+                )}
               </div>
 
               <div>
