@@ -1,109 +1,116 @@
-import { agregarAlCarrito } from "../../firebase/AgregarCarrito";
+import {
+    doc,
+    runTransaction
+} from "firebase/firestore";
+import { db } from "./firebaseConfig";
 
 // ====================================================================
-// PROPS NUEVAS para promociones:
-// - idItem: AHORA debe ser el id del PRODUCTO real vinculado a la promo
-//   (promo.id_producto), no el id de la promoción.
-// - cantidadPagar: cuántas unidades se cobran realmente (ej. 3x2 -> 2)
-// - idPromocion: id de la promoción (promo.id), para referencia/trazabilidad
-// - nombrePromo: título de la promoción, para mostrarlo en el carrito
-// Para productos normales (tipo === "producto") estas props nuevas se
-// pueden omitir, no afectan el comportamiento existente.
+// SERVICIO: agregarAlCarrito
+// Este archivo NO debe contener JSX ni componentes de React.
+// El botón que llama a esta función vive en:
+//   src/components/client/BotonAgregarCarrito.jsx
 // ====================================================================
-const AgregarCarrito = ({
-  tipo,
-  idItem,
-  cantidad = 1,
-  idCliente,
-  cantidadPagar,
-  idPromocion,
-  nombrePromo
+//
+// Usa un ID de documento DETERMINÍSTICO basado en el id del cliente
+// (`carrito_${idCliente}`) en vez de buscar el carrito con un query.
+// Esto evita que dos llamadas concurrentes (doble clic, dos productos
+// agregados muy rápido) creen dos carritos "en proceso" para el mismo
+// cliente. runTransaction garantiza que la lectura + escritura sea
+// atómica: Firestore reintenta automáticamente si detecta conflicto.
+// ====================================================================
+
+export const agregarAlCarrito = async ({
+    idCliente,
+    idItem,
+    tipo,
+    cantidad = 1,
+    extra = {} // { cantidadPagar, idPromocion, nombrePromo, esPromo }
 }) => {
-  const handleAgregar = async () => {
+    if (!idCliente) {
+        return { success: false, message: "Falta idCliente" };
+    }
     if (!idItem) {
-      alert("Esta promoción no tiene un producto vinculado todavía.");
-      return;
+        return { success: false, message: "Falta idItem" };
     }
 
-    const esPromo = tipo === "promocion";
+    const carritoRef = doc(db, "carritos", `carrito_${idCliente}`);
 
-    const respuesta = await agregarAlCarrito({
-      idCliente,
-      idItem,
-      tipo,
-      cantidad,
-      extra: esPromo
-        ? {
-            esPromo: true,
-            cantidadPagar: cantidadPagar ?? cantidad,
-            idPromocion: idPromocion || null,
-            nombrePromo: nombrePromo || null
-          }
-        : {}
-    });
-    if (respuesta.success) {
-      alert(
-        `${cantidad} ${
-          tipo === "producto"
-            ? "producto(s)"
-            : "promoción(es)"
-        } agregado(s) al carrito 🛒`
-      );
-    } else {
-      alert("Error al agregar al carrito");
+    try {
+        await runTransaction(db, async (transaction) => {
+            const carritoSnap = await transaction.get(carritoRef);
+
+            let carritoData;
+
+            if (!carritoSnap.exists() || carritoSnap.data().estado !== "proceso") {
+                // No existe el carrito, o existe pero ya no está "en proceso"
+                // (quedó en "vacio" o "pendiente" de un pedido anterior)
+                // -> se reinicia/crea limpio.
+                carritoData = {
+                    estado: "proceso",
+                    id_cliente: idCliente,
+                    items: []
+                };
+            } else {
+                carritoData = carritoSnap.data();
+            }
+
+            const items = carritoData.items || [];
+
+            // Buscar si el item ya existe.
+            // Para promociones, también se compara idPromocion, para que un
+            // producto suelto y el mismo producto dentro de una promo
+            // no se mezclen en la misma fila del carrito.
+            const index = items.findIndex(
+                item =>
+                    item.id_item === idItem &&
+                    item.tipo === tipo &&
+                    (item.idPromocion || null) === (extra.idPromocion || null)
+            );
+
+            let nuevoItems;
+
+            if (index !== -1) {
+                // Si ya existe solo aumentar cantidad (y cantidadPagar si aplica)
+                nuevoItems = items.map((item, i) => {
+                    if (i !== index) return item;
+                    return {
+                        ...item,
+                        cantidad: item.cantidad + cantidad,
+                        ...(extra.cantidadPagar
+                            ? { cantidadPagar: (item.cantidadPagar || 0) + extra.cantidadPagar }
+                            : {})
+                    };
+                });
+            } else {
+                // Si no existe agregar nuevo item
+                nuevoItems = [
+                    ...items,
+                    {
+                        id_item: idItem,
+                        tipo: tipo,
+                        cantidad: cantidad,
+                        ...extra
+                    }
+                ];
+            }
+
+            transaction.set(carritoRef, {
+                ...carritoData,
+                estado: "proceso",
+                id_cliente: idCliente,
+                items: nuevoItems
+            });
+        });
+
+        return {
+            success: true,
+            message: "Producto agregado al carrito"
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            success: false,
+            message: error.message
+        };
     }
-  };
-  const estilosBoton = {
-    width: "100%",
-    padding: "14px 20px",
-    border: "none",
-    borderRadius: "12px",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    color: "#fff",
-    transition: "all 0.3s ease",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    background:
-      tipo === "producto"
-        ? "linear-gradient(135deg, #ff6b35, #ff8c42)"
-        : "linear-gradient(135deg, #6c63ff, #867dff)"
-  };
-  const estilosIcono = {
-    fontSize: "18px"
-  };
-  return (
-    <button
-      style={estilosBoton}
-      onClick={handleAgregar}
-      onMouseOver={(e) => {
-        e.target.style.transform = "translateY(-2px)";
-        e.target.style.boxShadow =
-          "0 8px 20px rgba(0,0,0,0.25)";
-      }}
-      onMouseOut={(e) => {
-        e.target.style.transform = "translateY(0)";
-        e.target.style.boxShadow =
-          "0 4px 12px rgba(0,0,0,0.15)";
-      }}
-      onMouseDown={(e) => {
-        e.target.style.transform = "scale(0.97)";
-      }}
-      onMouseUp={(e) => {
-        e.target.style.transform = "translateY(-2px)";
-      }}
-    >
-      <span style={estilosIcono}>🛒</span>
-      {
-        tipo === "producto"
-          ? "Agregar Producto"
-          : "Agregar Promoción"
-      }
-    </button>
-  );
 };
-export default AgregarCarrito;
