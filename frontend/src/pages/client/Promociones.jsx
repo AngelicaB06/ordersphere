@@ -23,7 +23,7 @@ function Promociones() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [promociones, setPromociones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [agregandoId, setAgregandoId] = useState(null); // controla loading por tarjeta
+  const [agregandoId, setAgregandoId] = useState(null);
 
   useEffect(() => {
     const cargarPromociones = async () => {
@@ -45,6 +45,37 @@ function Promociones() {
       alert("Debes iniciar sesión");
       return;
     }
+
+    // Promo con producto vinculado (ej. 3x2)
+    if (promo.idProducto && promo.cantidadLleva && promo.cantidadPaga) {
+      try {
+        setAgregandoId(promo.id);
+        await agregarAlCarrito({
+          idCliente: auth.currentUser.uid,
+          idItem: promo.idProducto,
+          tipo: "producto",
+          cantidad: promo.cantidadLleva,
+          extra: {
+            cantidadPagar: promo.cantidadPaga,
+            idPromocion: promo.id,
+            nombrePromo: promo.titulo,
+            esPromo: true
+          }
+        });
+        alert(
+          `${promo.titulo} agregada al carrito 🛒 (llevas ${promo.cantidadLleva}, pagas ${promo.cantidadPaga})`
+        );
+        window.dispatchEvent(new Event("carritoActualizado"));
+      } catch (error) {
+        console.error(error);
+        alert("Error al agregar al carrito");
+      } finally {
+        setAgregandoId(null);
+      }
+      return;
+    }
+
+    // Promo genérica sin producto vinculado (fallback)
     try {
       setAgregandoId(promo.id);
       await agregarAlCarrito({

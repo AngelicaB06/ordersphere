@@ -95,6 +95,11 @@ function Carrito() {
             return {
               id: item.id_item,
               cantidad: item.cantidad,
+              cantidadPagar: item.cantidadPagar ?? item.cantidad,
+              esPromo: item.esPromo || false,
+              idPromocion: item.idPromocion || null,
+              nombrePromo: item.nombrePromo || null,
+              tipo: item.tipo || "producto",
               ...snap.data()
             };
           } catch (err) {
@@ -121,7 +126,15 @@ function Carrito() {
       const nuevoItems = nuevosProductos.map((p) => ({
         id_item: p.id,
         cantidad: p.cantidad,
-        tipo: "producto"
+        tipo: p.tipo || "producto",
+        ...(p.esPromo
+          ? {
+              cantidadPagar: p.cantidadPagar,
+              esPromo: true,
+              idPromocion: p.idPromocion,
+              nombrePromo: p.nombrePromo
+            }
+          : {})
       }));
 
       await updateDoc(doc(db, "carritos", carrito.id), { items: nuevoItems });
@@ -140,14 +153,22 @@ function Carrito() {
     if (nuevaCantidad < 1) return;
     try {
       const productosActualizados = productos.map((p) =>
-        p.id === id ? { ...p, cantidad: nuevaCantidad } : p
+        p.id === id && !p.esPromo ? { ...p, cantidad: nuevaCantidad } : p
       );
       setProductos(productosActualizados);
 
       const nuevoItems = productosActualizados.map((p) => ({
         id_item: p.id,
         cantidad: p.cantidad,
-        tipo: "producto"
+        tipo: p.tipo || "producto",
+        ...(p.esPromo
+          ? {
+              cantidadPagar: p.cantidadPagar,
+              esPromo: true,
+              idPromocion: p.idPromocion,
+              nombrePromo: p.nombrePromo
+            }
+          : {})
       }));
 
       await updateDoc(doc(db, "carritos", carrito.id), { items: nuevoItems });
@@ -157,7 +178,10 @@ function Carrito() {
     }
   };
 
-  const subtotal = productos.reduce((t, p) => t + p.precio * p.cantidad, 0);
+  const subtotal = productos.reduce(
+    (t, p) => t + p.precio * (p.esPromo ? p.cantidadPagar : p.cantidad),
+    0
+  );
   const envio = productos.length > 0 ? 30 : 0;
   const total = subtotal + envio;
 
@@ -326,7 +350,19 @@ function Carrito() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-gray-800">{p.nombre}</h3>
-                    <p className="text-orange-500 font-semibold">${p.precio.toFixed(2)}</p>
+                    {p.esPromo && (
+                      <span className="inline-block bg-orange-100 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full mt-1">
+                        🎉 {p.nombrePromo}
+                      </span>
+                    )}
+                    <p className="text-orange-500 font-semibold mt-1">
+                      ${p.precio.toFixed(2)}{" "}
+                      {p.esPromo && (
+                        <span className="text-xs text-slate-400 font-normal">
+                          c/u (precio normal)
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <button
                     onClick={() => eliminarProducto(p.id)}
@@ -336,21 +372,29 @@ function Carrito() {
                   </button>
                 </div>
                 <div className="flex items-center gap-3 mt-2">
-                  <button
-                    onClick={() => actualizarCantidad(p.id, p.cantidad - 1)}
-                    className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center font-bold transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="font-semibold w-8 text-center">{p.cantidad}</span>
-                  <button
-                    onClick={() => actualizarCantidad(p.id, p.cantidad + 1)}
-                    className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center font-bold transition-colors"
-                  >
-                    +
-                  </button>
+                  {p.esPromo ? (
+                    <span className="text-sm font-semibold text-slate-600">
+                      Llevas {p.cantidad}, pagas {p.cantidadPagar}
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => actualizarCantidad(p.id, p.cantidad - 1)}
+                        className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center font-bold transition-colors"
+                      >
+                        -
+                      </button>
+                      <span className="font-semibold w-8 text-center">{p.cantidad}</span>
+                      <button
+                        onClick={() => actualizarCantidad(p.id, p.cantidad + 1)}
+                        className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center font-bold transition-colors"
+                      >
+                        +
+                      </button>
+                    </>
+                  )}
                   <span className="text-sm text-gray-500 ml-2">
-                    Subtotal: ${(p.precio * p.cantidad).toFixed(2)}
+                    Subtotal: ${(p.precio * (p.esPromo ? p.cantidadPagar : p.cantidad)).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -436,14 +480,16 @@ function Carrito() {
               <div key={p.id} className="flex justify-between items-start text-sm">
                 <div className="flex-1 min-w-0 pr-3">
                   <p className="text-slate-700 font-medium truncate">
-                    {p.cantidad}x {p.nombre}
+                    {p.cantidad}x {p.nombre} {p.esPromo && "🎉"}
                   </p>
                   <p className="text-slate-400 text-xs">
-                    ${p.precio.toFixed(2)} c/u
+                    {p.esPromo
+                      ? `Pagas ${p.cantidadPagar} de ${p.cantidad} · $${p.precio.toFixed(2)} c/u`
+                      : `$${p.precio.toFixed(2)} c/u`}
                   </p>
                 </div>
                 <span className="text-slate-700 font-semibold whitespace-nowrap">
-                  ${(p.precio * p.cantidad).toFixed(2)}
+                  ${(p.precio * (p.esPromo ? p.cantidadPagar : p.cantidad)).toFixed(2)}
                 </span>
               </div>
             ))}

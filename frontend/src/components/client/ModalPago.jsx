@@ -43,6 +43,12 @@ function ModalPago({ total, carrito, productos, metodoPago = "tarjeta", onClose,
   const [errors, setErrors] = useState({});
   const [paymentStatus, setPaymentStatus] = useState(null);
 
+  // ====================================
+  // HELPER: cantidad que realmente se cobra por producto
+  // (si es promo, se cobra cantidadPagar; si no, se cobra cantidad completa)
+  // ====================================
+  const cantidadCobrada = (p) => (p.esPromo ? p.cantidadPagar : p.cantidad);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     let formattedValue = value;
@@ -171,6 +177,11 @@ function ModalPago({ total, carrito, productos, metodoPago = "tarjeta", onClose,
           nombre: p.nombre,
           precio: p.precio,
           cantidad: p.cantidad,
+          cantidadPagar: cantidadCobrada(p),
+          esPromo: p.esPromo || false,
+          ...(p.esPromo
+            ? { idPromocion: p.idPromocion || null, nombrePromo: p.nombrePromo || null }
+            : {}),
         })),
         total,
         fechadecreacion: serverTimestamp(),
@@ -251,6 +262,11 @@ function ModalPago({ total, carrito, productos, metodoPago = "tarjeta", onClose,
           nombre: p.nombre,
           precio: p.precio,
           cantidad: p.cantidad,
+          cantidadPagar: cantidadCobrada(p),
+          esPromo: p.esPromo || false,
+          ...(p.esPromo
+            ? { idPromocion: p.idPromocion || null, nombrePromo: p.nombrePromo || null }
+            : {}),
         })),
         total,
         fechadecreacion: serverTimestamp(),
@@ -392,11 +408,16 @@ function ModalPago({ total, carrito, productos, metodoPago = "tarjeta", onClose,
 
     productos.forEach((p) => {
       const nombreCorto = p.nombre.length > 22 ? p.nombre.slice(0, 22) + "…" : p.nombre;
+      const cCobrada = cantidadCobrada(p);
 
       docPdf.setTextColor(...grisOscuro);
-      docPdf.text(`${p.cantidad}x ${nombreCorto}`, margin, y);
+      docPdf.text(
+        p.esPromo ? `${p.cantidad}x ${nombreCorto} (paga ${cCobrada})` : `${p.cantidad}x ${nombreCorto}`,
+        margin,
+        y
+      );
       docPdf.setFont("helvetica", "bold");
-      docPdf.text(`$${(p.precio * p.cantidad).toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+      docPdf.text(`$${(p.precio * cCobrada).toFixed(2)}`, pageWidth - margin, y, { align: "right" });
       docPdf.setFont("helvetica", "normal");
       y += 4;
 
@@ -411,7 +432,7 @@ function ModalPago({ total, carrito, productos, metodoPago = "tarjeta", onClose,
     y += 6;
 
     // ===== TOTALES =====
-    const subtotal = productos.reduce((t, p) => t + p.precio * p.cantidad, 0);
+    const subtotal = productos.reduce((t, p) => t + p.precio * cantidadCobrada(p), 0);
     const envio = total - subtotal;
 
     docPdf.setTextColor(...grisClaro);
