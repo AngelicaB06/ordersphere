@@ -2,6 +2,7 @@
 import Layout from "../components/Layout";
 import StatCard from "../components/StatCard";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { obtenerPedidos } from "../firebase/pedidos";
 import {
   obtenerTotalProductos,
@@ -19,6 +20,8 @@ import {
 } from "recharts";
 
 function Dashboard() {
+  const navigate = useNavigate();
+
   // ==========================
   // ESTADOS
   // ==========================
@@ -93,7 +96,10 @@ function Dashboard() {
           <p className="mt-3 text-orange-100 text-lg">
             Gestiona productos, pedidos y promociones desde un solo lugar.
           </p>
-          <button className="mt-6 bg-white text-orange-600 px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all duration-300">
+          <button
+            onClick={() => navigate("/pedidos")}
+            className="mt-6 bg-white text-orange-600 px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all duration-300"
+          >
             Ver Pedidos
           </button>
         </div>
