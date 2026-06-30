@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCvVY4ZQQRXSxFd4H350LvbDvrayd_pUz4",
-  authDomain: "ordersphere-dbda9.firebaseapp.com",
-  projectId: "ordersphere-dbda9",
-  storageBucket: "ordersphere-dbda9.firebasestorage.app",
-  messagingSenderId: "977233803920",
-  appId: "1:977233803920:web:722991cda49f176a083615"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
