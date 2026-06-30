@@ -7,6 +7,7 @@ import {
   actualizarPromocion,
   eliminarPromocion
 } from "../firebase/promociones";
+import { obtenerProductos } from "../firebase/productos";
 import {
   FaGift,
   FaPlus,
@@ -18,7 +19,8 @@ import {
   FaToggleOn,
   FaToggleOff,
   FaPercentage,
-  FaImage
+  FaImage,
+  FaBoxOpen
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
@@ -27,6 +29,7 @@ function Promociones() {
   // ESTADOS
   // ==========================
   const [promociones, setPromociones] = useState([]);
+  const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
@@ -37,13 +40,17 @@ function Promociones() {
   const [descuento, setDescuento] = useState("");
   const [imagen, setImagen] = useState("");
   const [activa, setActiva] = useState(true);
+  const [idProducto, setIdProducto] = useState("");
+  const [cantidadLleva, setCantidadLleva] = useState("");
+  const [cantidadPaga, setCantidadPaga] = useState("");
   const [editando, setEditando] = useState(null); // id de la promoción a editar
 
   // ==========================
-  // CARGAR PROMOCIONES
+  // CARGAR PROMOCIONES Y PRODUCTOS
   // ==========================
   useEffect(() => {
     cargarPromociones();
+    cargarProductos();
   }, []);
 
   const cargarPromociones = async () => {
@@ -64,6 +71,29 @@ function Promociones() {
     }
   };
 
+  const cargarProductos = async () => {
+    try {
+      const data = await obtenerProductos();
+      setProductos(data);
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron cargar los productos",
+        confirmButtonColor: "#ef4444"
+      });
+    }
+  };
+
+  // Devuelve el nombre del producto vinculado a una promoción, o null si
+  // no hay vínculo o el producto ya no existe.
+  const nombreProductoVinculado = (promo) => {
+    if (!promo.id_producto) return null;
+    const prod = productos.find((p) => p.id === promo.id_producto);
+    return prod ? prod.nombre : null;
+  };
+
   // ==========================
   // FILTRAR
   // ==========================
@@ -82,6 +112,9 @@ function Promociones() {
     setDescuento("");
     setImagen("");
     setActiva(true);
+    setIdProducto("");
+    setCantidadLleva("");
+    setCantidadPaga("");
     setMostrarModal(true);
   };
 
@@ -95,6 +128,9 @@ function Promociones() {
     setDescuento(promo.descuento?.toString() || "");
     setImagen(promo.imagen || "");
     setActiva(promo.activa !== undefined ? promo.activa : true);
+    setIdProducto(promo.id_producto || "");
+    setCantidadLleva(promo.cantidadLleva?.toString() || "");
+    setCantidadPaga(promo.cantidadPaga?.toString() || "");
     setMostrarModal(true);
   };
 
@@ -112,13 +148,33 @@ function Promociones() {
       return;
     }
 
+    if (!idProducto) {
+      Swal.fire({
+        icon: "warning",
+        title: "Producto requerido",
+        text: "Debes vincular la promoción a un producto real del menú",
+        confirmButtonColor: "#f97316"
+      });
+      return;
+    }
+
     try {
       const data = {
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
         descuento: Number(descuento) || 0,
         imagen: imagen.trim(),
-        activa: activa
+        activa: activa,
+        // Producto real al que se le aplica la promoción. El carrito usa
+        // este id como id_item, NO el id de la promoción, porque el id
+        // de la promoción no existe en la colección "productos".
+        id_producto: idProducto,
+        // Cuántas unidades hay que llevar y cuántas se pagan realmente.
+        // Ej. "3x2" -> cantidadLleva: 3, cantidadPaga: 2.
+        // Si se deja vacío, se asume que no hay descuento por cantidad
+        // (cantidadPaga = cantidadLleva) y solo aplica el % de descuento.
+        cantidadLleva: Number(cantidadLleva) || 1,
+        cantidadPaga: Number(cantidadPaga) || Number(cantidadLleva) || 1
       };
 
       if (editando) {
@@ -319,54 +375,74 @@ function Promociones() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {promocionesFiltradas.map((promo) => (
-                  <div
-                    key={promo.id}
-                    className="border rounded-2xl overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700"
-                  >
-                    {promo.imagen && (
-                      <img
-                        src={promo.imagen}
-                        alt={promo.titulo}
-                        className="w-full h-36 object-cover"
-                        onError={(e) => { e.target.style.display = "none"; }}
-                      />
-                    )}
-                    <div className="p-5">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-lg dark:text-white">{promo.titulo}</h4>
-                            {promo.activa !== false ? (
-                              <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-full">Activa</span>
-                            ) : (
-                              <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded-full">Inactiva</span>
+                {promocionesFiltradas.map((promo) => {
+                  const nombreProd = nombreProductoVinculado(promo);
+                  return (
+                    <div
+                      key={promo.id}
+                      className="border rounded-2xl overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700"
+                    >
+                      {promo.imagen && (
+                        <img
+                          src={promo.imagen}
+                          alt={promo.titulo}
+                          className="w-full h-36 object-cover"
+                          onError={(e) => { e.target.style.display = "none"; }}
+                        />
+                      )}
+                      <div className="p-5">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-lg dark:text-white">{promo.titulo}</h4>
+                              {promo.activa !== false ? (
+                                <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-full">Activa</span>
+                              ) : (
+                                <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded-full">Inactiva</span>
+                              )}
+                            </div>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{promo.descripcion}</p>
+                            <div className="flex items-center gap-1 mt-2 text-pink-500 font-bold">
+                              <FaPercentage />
+                              <span>{promo.descuento}% OFF</span>
+                            </div>
+                            {promo.cantidadLleva > 1 && (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Llevas {promo.cantidadLleva}, pagas {promo.cantidadPaga}
+                              </p>
                             )}
+                            <div className="flex items-center gap-1.5 mt-2 text-sm">
+                              <FaBoxOpen className={nombreProd ? "text-blue-500" : "text-red-500"} />
+                              {nombreProd ? (
+                                <span className="text-slate-600 dark:text-slate-300">
+                                  Vinculada a: <strong>{nombreProd}</strong>
+                                </span>
+                              ) : (
+                                <span className="text-red-500 font-medium">
+                                  ⚠ Sin producto vinculado
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{promo.descripcion}</p>
-                          <div className="flex items-center gap-1 mt-2 text-pink-500 font-bold">
-                            <FaPercentage />
-                            <span>{promo.descuento}% OFF</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => abrirModalEditar(promo)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
+                            >
+                              <FaEdit size={14} /> Editar
+                            </button>
+                            <button
+                              onClick={() => borrarPromocion(promo.id, promo.titulo)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
+                            >
+                              <FaTrash size={14} /> Eliminar
+                            </button>
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => abrirModalEditar(promo)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
-                          >
-                            <FaEdit size={14} /> Editar
-                          </button>
-                          <button
-                            onClick={() => borrarPromocion(promo.id, promo.titulo)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-all"
-                          >
-                            <FaTrash size={14} /> Eliminar
-                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -412,6 +488,30 @@ function Promociones() {
                   className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <FaBoxOpen className="text-pink-500" />
+                  Producto vinculado *
+                </label>
+                <select
+                  value={idProducto}
+                  onChange={(e) => setIdProducto(e.target.value)}
+                  className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                >
+                  <option value="">Selecciona un producto del menú...</option>
+                  {productos.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre} (${p.precio})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400 mt-1">
+                  La promoción se aplica sobre este producto. Es necesario
+                  para que el carrito sepa qué producto agregar.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Descripción
@@ -424,6 +524,41 @@ function Promociones() {
                   className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white resize-none"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Llevas (cantidad)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Ej. 3"
+                    value={cantidadLleva}
+                    onChange={(e) => setCantidadLleva(e.target.value)}
+                    className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Pagas (cantidad)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Ej. 2"
+                    value={cantidadPaga}
+                    onChange={(e) => setCantidadPaga(e.target.value)}
+                    className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-pink-400 outline-none dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                    min="1"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 -mt-2">
+                Ej. para "3x2": Llevas 3, Pagas 2. Si dejas estos campos
+                vacíos se asume 1 y 1 (sin descuento por cantidad, solo
+                aplica el % de descuento de abajo).
+              </p>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Descuento (%)
