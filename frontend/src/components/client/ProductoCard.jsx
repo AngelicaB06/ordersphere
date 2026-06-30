@@ -68,17 +68,30 @@ function ProductoCard({
         {/* Zona clicable: abre el modal de detalle */}
         <button
           onClick={() => setModalAbierto(true)}
-          className="w-full text-left cursor-pointer"
+          className="w-full text-left cursor-pointer group"
         >
-          <img
-            src={imagen}
-            alt={nombre}
-            className="
-              h-40
-              w-full
-              object-cover
-            "
-          />
+          <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+            <img
+              src={imagen}
+              alt={nombre}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src =
+                  "https://placehold.co/400x300/fff7ed/f97316?text=Sin+imagen";
+              }}
+              className="
+                h-full
+                w-full
+                object-cover
+                transition-transform
+                duration-500
+                ease-out
+                group-hover:scale-110
+              "
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+          </div>
           <div className="px-5 pt-5">
             <h3 className="font-bold text-slate-900 text-base">
               {nombre}
@@ -199,11 +212,19 @@ function ProductoCard({
               <X size={18} />
             </button>
 
-            <img
-              src={imagen}
-              alt={nombre}
-              className="w-full h-56 sm:h-64 object-cover"
-            />
+            <div className="relative w-full h-56 sm:h-64 overflow-hidden bg-slate-100">
+              <img
+                src={imagen}
+                alt={nombre}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    "https://placehold.co/600x400/fff7ed/f97316?text=Sin+imagen";
+                }}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+            </div>
 
             <div className="p-6">
               <h3 className="font-black text-slate-900 text-2xl tracking-tight">
