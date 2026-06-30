@@ -15,12 +15,15 @@ import {
 } from "lucide-react";
 import BottomNav from "../../components/client/BottomNav";
 import { obtenerPromociones } from "../../firebase/promociones";
+import { agregarAlCarrito } from "../../firebase/AgregarCarrito";
+import { auth } from "../../firebase/firebaseConfig";
 
 function Promociones() {
   const navigate = useNavigate();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [promociones, setPromociones] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [agregandoId, setAgregandoId] = useState(null); // controla loading por tarjeta
 
   useEffect(() => {
     const cargarPromociones = async () => {
@@ -36,6 +39,29 @@ function Promociones() {
     };
     cargarPromociones();
   }, []);
+
+  const handleAgregarAlCarrito = async (promo) => {
+    if (!auth.currentUser) {
+      alert("Debes iniciar sesión");
+      return;
+    }
+    try {
+      setAgregandoId(promo.id);
+      await agregarAlCarrito({
+        idCliente: auth.currentUser.uid,
+        idItem: promo.id,
+        tipo: "promocion",
+        cantidad: 1
+      });
+      alert(`${promo.titulo} agregada al carrito 🛒`);
+      window.dispatchEvent(new Event("carritoActualizado"));
+    } catch (error) {
+      console.error(error);
+      alert("Error al agregar al carrito");
+    } finally {
+      setAgregandoId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-100 via-orange-50 to-red-50 relative overflow-hidden pb-28">
@@ -195,29 +221,56 @@ function Promociones() {
                     {promo.descripcion}
                   </p>
 
-                  <button
-                    onClick={() => navigate("/menu")}
-                    className="
-                      mt-5
-                      flex
-                      items-center
-                      gap-2
-                      bg-orange-500
-                      hover:bg-orange-400
-                      text-white
-                      px-5
-                      py-2.5
-                      rounded-xl
-                      font-bold
-                      text-sm
-                      hover:scale-105
-                      transition-all
-                      duration-200
-                    "
-                  >
-                    Ver Menú
-                    <ArrowRight size={15} />
-                  </button>
+                  <div className="flex items-center gap-3 mt-5 flex-wrap">
+                    <button
+                      onClick={() => navigate("/menu")}
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        bg-white
+                        border
+                        border-orange-300
+                        text-orange-600
+                        hover:bg-orange-50
+                        px-5
+                        py-2.5
+                        rounded-xl
+                        font-bold
+                        text-sm
+                        transition-all
+                        duration-200
+                      "
+                    >
+                      Ver Menú
+                      <ArrowRight size={15} />
+                    </button>
+
+                    <button
+                      onClick={() => handleAgregarAlCarrito(promo)}
+                      disabled={agregandoId === promo.id}
+                      className={`
+                        flex
+                        items-center
+                        gap-2
+                        px-5
+                        py-2.5
+                        rounded-xl
+                        font-bold
+                        text-sm
+                        transition-all
+                        duration-200
+                        ${
+                          agregandoId === promo.id
+                            ? "bg-gray-400 text-white cursor-not-allowed"
+                            : "bg-orange-500 hover:bg-orange-400 text-white hover:scale-105"
+                        }
+                      `}
+                    >
+                      <ShoppingCart size={15} />
+                      {agregandoId === promo.id ? "Agregando..." : "Añadir al carrito"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
