@@ -47,12 +47,14 @@ function Promociones() {
     }
 
     // Promo con producto vinculado (ej. 3x2)
-    if (promo.idProducto && promo.cantidadLleva && promo.cantidadPaga) {
+    // NOTA: el campo en Firestore se llama "id_producto" (snake_case),
+    // tal como lo guarda el panel de administración de promociones.
+    if (promo.id_producto && promo.cantidadLleva && promo.cantidadPaga) {
       try {
         setAgregandoId(promo.id);
         await agregarAlCarrito({
           idCliente: auth.currentUser.uid,
-          idItem: promo.idProducto,
+          idItem: promo.id_producto,
           tipo: "producto",
           cantidad: promo.cantidadLleva,
           extra: {
@@ -75,23 +77,13 @@ function Promociones() {
       return;
     }
 
-    // Promo genérica sin producto vinculado (fallback)
-    try {
-      setAgregandoId(promo.id);
-      await agregarAlCarrito({
-        idCliente: auth.currentUser.uid,
-        idItem: promo.id,
-        tipo: "promocion",
-        cantidad: 1
-      });
-      alert(`${promo.titulo} agregada al carrito 🛒`);
-      window.dispatchEvent(new Event("carritoActualizado"));
-    } catch (error) {
-      console.error(error);
-      alert("Error al agregar al carrito");
-    } finally {
-      setAgregandoId(null);
-    }
+    // Promo sin producto vinculado todavía: no se puede agregar al
+    // carrito porque no hay un producto real al que cobrarle. Se avisa
+    // en vez de mandar el id de la promoción como si fuera un producto
+    // (eso generaba items "fantasma" que nunca aparecían en el carrito).
+    alert(
+      `"${promo.titulo}" todavía no tiene un producto vinculado en el panel de administración. Avisa al equipo para que la configuren.`
+    );
   };
 
   return (
@@ -194,117 +186,130 @@ function Promociones() {
           </div>
         ) : promociones.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {promociones.map((promo) => (
-              <div
-                key={promo.id}
-                className="
-                  group
-                  relative
-                  bg-white/80
-                  backdrop-blur-sm
-                  border
-                  border-orange-200
-                  rounded-2xl
-                  overflow-hidden
-                  shadow-sm
-                  hover:shadow-lg
-                  hover:-translate-y-1
-                  transition-all
-                  duration-300
-                "
-              >
-                {/* Imagen de la promoción */}
-                {promo.imagen ? (
-                  <div className="relative h-44 w-full overflow-hidden bg-orange-50">
-                    <img
-                      src={promo.imagen}
-                      alt={promo.titulo}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                        e.target.parentElement.classList.add("hidden");
-                      }}
-                    />
-                    {promo.descuento > 0 && (
-                      <span className="absolute top-3 right-3 flex items-center gap-1 bg-orange-500 text-white text-sm font-black px-3 py-1.5 rounded-full shadow-lg">
-                        <Percent size={13} />
-                        {promo.descuento}% OFF
-                      </span>
+            {promociones.map((promo) => {
+              const tieneProducto = !!(promo.id_producto && promo.cantidadLleva && promo.cantidadPaga);
+              return (
+                <div
+                  key={promo.id}
+                  className="
+                    group
+                    relative
+                    bg-white/80
+                    backdrop-blur-sm
+                    border
+                    border-orange-200
+                    rounded-2xl
+                    overflow-hidden
+                    shadow-sm
+                    hover:shadow-lg
+                    hover:-translate-y-1
+                    transition-all
+                    duration-300
+                  "
+                >
+                  {/* Imagen de la promoción */}
+                  {promo.imagen ? (
+                    <div className="relative h-44 w-full overflow-hidden bg-orange-50">
+                      <img
+                        src={promo.imagen}
+                        alt={promo.titulo}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                          e.target.parentElement.classList.add("hidden");
+                        }}
+                      />
+                      {promo.descuento > 0 && (
+                        <span className="absolute top-3 right-3 flex items-center gap-1 bg-orange-500 text-white text-sm font-black px-3 py-1.5 rounded-full shadow-lg">
+                          <Percent size={13} />
+                          {promo.descuento}% OFF
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative h-44 w-full bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center">
+                      <Gift className="text-orange-300" size={56} />
+                      {promo.descuento > 0 && (
+                        <span className="absolute top-3 right-3 flex items-center gap-1 bg-orange-500 text-white text-sm font-black px-3 py-1.5 rounded-full shadow-lg">
+                          <Percent size={13} />
+                          {promo.descuento}% OFF
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="p-6">
+                    <h3 className="font-black text-slate-900 text-xl tracking-tight">
+                      {promo.titulo}
+                    </h3>
+                    <p className="text-slate-500 text-sm mt-2 leading-relaxed line-clamp-2">
+                      {promo.descripcion}
+                    </p>
+                    {tieneProducto && (
+                      <p className="text-orange-500 text-xs font-bold mt-2">
+                        Llevas {promo.cantidadLleva}, pagas {promo.cantidadPaga}
+                      </p>
                     )}
-                  </div>
-                ) : (
-                  <div className="relative h-44 w-full bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center">
-                    <Gift className="text-orange-300" size={56} />
-                    {promo.descuento > 0 && (
-                      <span className="absolute top-3 right-3 flex items-center gap-1 bg-orange-500 text-white text-sm font-black px-3 py-1.5 rounded-full shadow-lg">
-                        <Percent size={13} />
-                        {promo.descuento}% OFF
-                      </span>
+                    {!tieneProducto && (
+                      <p className="text-red-400 text-xs font-semibold mt-2">
+                        ⚠ Promoción no disponible para agregar todavía
+                      </p>
                     )}
-                  </div>
-                )}
 
-                <div className="p-6">
-                  <h3 className="font-black text-slate-900 text-xl tracking-tight">
-                    {promo.titulo}
-                  </h3>
-                  <p className="text-slate-500 text-sm mt-2 leading-relaxed line-clamp-2">
-                    {promo.descripcion}
-                  </p>
+                    <div className="flex items-center gap-3 mt-5 flex-wrap">
+                      <button
+                        onClick={() => navigate("/menu")}
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                          bg-white
+                          border
+                          border-orange-300
+                          text-orange-600
+                          hover:bg-orange-50
+                          px-5
+                          py-2.5
+                          rounded-xl
+                          font-bold
+                          text-sm
+                          transition-all
+                          duration-200
+                        "
+                      >
+                        Ver Menú
+                        <ArrowRight size={15} />
+                      </button>
 
-                  <div className="flex items-center gap-3 mt-5 flex-wrap">
-                    <button
-                      onClick={() => navigate("/menu")}
-                      className="
-                        flex
-                        items-center
-                        gap-2
-                        bg-white
-                        border
-                        border-orange-300
-                        text-orange-600
-                        hover:bg-orange-50
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        font-bold
-                        text-sm
-                        transition-all
-                        duration-200
-                      "
-                    >
-                      Ver Menú
-                      <ArrowRight size={15} />
-                    </button>
-
-                    <button
-                      onClick={() => handleAgregarAlCarrito(promo)}
-                      disabled={agregandoId === promo.id}
-                      className={`
-                        flex
-                        items-center
-                        gap-2
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        font-bold
-                        text-sm
-                        transition-all
-                        duration-200
-                        ${
-                          agregandoId === promo.id
-                            ? "bg-gray-400 text-white cursor-not-allowed"
-                            : "bg-orange-500 hover:bg-orange-400 text-white hover:scale-105"
-                        }
-                      `}
-                    >
-                      <ShoppingCart size={15} />
-                      {agregandoId === promo.id ? "Agregando..." : "Añadir al carrito"}
-                    </button>
+                      <button
+                        onClick={() => handleAgregarAlCarrito(promo)}
+                        disabled={agregandoId === promo.id}
+                        className={`
+                          flex
+                          items-center
+                          gap-2
+                          px-5
+                          py-2.5
+                          rounded-xl
+                          font-bold
+                          text-sm
+                          transition-all
+                          duration-200
+                          ${
+                            agregandoId === promo.id
+                              ? "bg-gray-400 text-white cursor-not-allowed"
+                              : "bg-orange-500 hover:bg-orange-400 text-white hover:scale-105"
+                          }
+                        `}
+                      >
+                        <ShoppingCart size={15} />
+                        {agregandoId === promo.id ? "Agregando..." : "Añadir al carrito"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">
