@@ -62,7 +62,7 @@ function Productos() {
   };
 
   // ===========================
-  // CATEGORÍAS ÚNICAS EXISTENTES (para el datalist)
+  // CATEGORÍAS ÚNICAS EXISTENTES (para el select)
   // ===========================
 
   const categoriasExistentes = useMemo(() => {
@@ -212,24 +212,21 @@ function Productos() {
               className="border p-3 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none"
             />
 
-            {/* Campo de categoría con sugerencias (datalist) */}
-            <div>
-              <input
-                type="text"
-                list="lista-categorias"
-                placeholder="Categoría"
-                value={formulario.categoria}
-                onChange={(e) =>
-                  setFormulario({ ...formulario, categoria: e.target.value })
-                }
-                className="border p-3 rounded-xl w-full focus:ring-2 focus:ring-orange-400 outline-none"
-              />
-              <datalist id="lista-categorias">
-                {categoriasExistentes.map((cat) => (
-                  <option key={cat} value={cat} />
-                ))}
-              </datalist>
-            </div>
+            {/* Campo de categoría: SOLO selección de categorías existentes */}
+            <select
+              value={formulario.categoria}
+              onChange={(e) =>
+                setFormulario({ ...formulario, categoria: e.target.value })
+              }
+              className="border p-3 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none bg-white text-slate-700"
+            >
+              <option value="">Selecciona una categoría</option>
+              {categoriasExistentes.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
 
             <input
               type="text"
@@ -241,27 +238,6 @@ function Productos() {
               className="border p-3 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none"
             />
           </div>
-
-          {/* Chips de categorías existentes como atajo rápido */}
-          {categoriasExistentes.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              <span className="text-xs text-slate-400 mt-1.5">Categorías existentes:</span>
-              {categoriasExistentes.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setFormulario({ ...formulario, categoria: cat })}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                    formulario.categoria === cat
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-orange-50 hover:border-orange-300"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
 
           <textarea
             rows="4"
