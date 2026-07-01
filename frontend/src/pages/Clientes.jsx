@@ -6,8 +6,6 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  query,
-  orderBy
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import {
@@ -20,7 +18,9 @@ import {
   FaExclamationTriangle,
   FaEnvelope,
   FaUserShield,
-  FaUserAlt
+  FaUserAlt,
+  FaPhone,
+  FaMapMarkerAlt
 } from "react-icons/fa";
 
 function Clientes() {
@@ -43,12 +43,16 @@ function Clientes() {
   const cargarClientes = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, "usuarios"), orderBy("email"));
-      const snapshot = await getDocs(q);
+      // ✅ Colección con U mayúscula, sin orderBy para evitar error de índice
+      const snapshot = await getDocs(collection(db, "Usuarios"));
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data()
       }));
+      // Ordenar en el cliente por correo
+      data.sort((a, b) =>
+        (a.correo || "").localeCompare(b.correo || "")
+      );
       setClientes(data);
     } catch (error) {
       console.error("Error cargando clientes:", error);
@@ -63,11 +67,11 @@ function Clientes() {
   const clientesFiltrados = clientes.filter((c) => {
     const texto = busqueda.toLowerCase();
     const coincideTexto =
-      c.email?.toLowerCase().includes(texto) ||
-      c.nombre?.toLowerCase().includes(texto);
+      c.correo?.toLowerCase().includes(texto) ||
+      c.nombre?.toLowerCase().includes(texto) ||
+      c.telefono?.toLowerCase().includes(texto);
     const coincideRol =
-      filtroRol === "todos" ||
-      c.rol === filtroRol;
+      filtroRol === "todos" || c.rol === filtroRol;
     return coincideTexto && coincideRol;
   });
 
@@ -77,7 +81,7 @@ function Clientes() {
   const cambiarRol = async (id, rolActual) => {
     const nuevoRol = rolActual === "admin" ? "cliente" : "admin";
     try {
-      await updateDoc(doc(db, "usuarios", id), { rol: nuevoRol });
+      await updateDoc(doc(db, "Usuarios", id), { rol: nuevoRol });
       setClientes((prev) =>
         prev.map((c) => c.id === id ? { ...c, rol: nuevoRol } : c)
       );
@@ -95,7 +99,7 @@ function Clientes() {
   const toggleEstado = async (id, estadoActual) => {
     const nuevoEstado = !estadoActual;
     try {
-      await updateDoc(doc(db, "usuarios", id), { activo: nuevoEstado });
+      await updateDoc(doc(db, "Usuarios", id), { activo: nuevoEstado });
       setClientes((prev) =>
         prev.map((c) => c.id === id ? { ...c, activo: nuevoEstado } : c)
       );
@@ -112,7 +116,7 @@ function Clientes() {
   // ===========================
   const eliminarCliente = async (id) => {
     try {
-      await deleteDoc(doc(db, "usuarios", id));
+      await deleteDoc(doc(db, "Usuarios", id));
       setClientes((prev) => prev.filter((c) => c.id !== id));
       if (clienteSeleccionado?.id === id) setClienteSeleccionado(null);
     } catch (error) {
@@ -123,9 +127,9 @@ function Clientes() {
   // ===========================
   // ESTADÍSTICAS
   // ===========================
-  const total = clientes.length;
-  const activos = clientes.filter((c) => c.activo !== false).length;
-  const admins = clientes.filter((c) => c.rol === "admin").length;
+  const total    = clientes.length;
+  const activos  = clientes.filter((c) => c.activo !== false).length;
+  const admins   = clientes.filter((c) => c.rol === "admin").length;
   const inactivos = clientes.filter((c) => c.activo === false).length;
 
   return (
@@ -150,12 +154,12 @@ function Clientes() {
         {/* ESTADÍSTICAS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Total Usuarios",  value: total,    color: "text-orange-500", bg: "border-orange-200" },
-            { label: "Activos",         value: activos,  color: "text-green-500",  bg: "border-green-200"  },
-            { label: "Inactivos",       value: inactivos,color: "text-red-400",    bg: "border-red-200"    },
-            { label: "Administradores", value: admins,   color: "text-blue-500",   bg: "border-blue-200"   },
-          ].map(({ label, value, color, bg }) => (
-            <div key={label} className={`bg-white rounded-2xl p-6 shadow-sm border-l-4 ${bg}`}>
+            { label: "Total Usuarios",  value: total,     color: "text-orange-500", border: "border-orange-400" },
+            { label: "Activos",         value: activos,   color: "text-green-500",  border: "border-green-400"  },
+            { label: "Inactivos",       value: inactivos, color: "text-red-400",    border: "border-red-400"    },
+            { label: "Administradores", value: admins,    color: "text-blue-500",   border: "border-blue-400"   },
+          ].map(({ label, value, color, border }) => (
+            <div key={label} className={`bg-white rounded-2xl p-6 shadow-sm border-l-4 ${border}`}>
               <p className="text-slate-500 text-sm font-medium">{label}</p>
               <p className={`text-4xl font-black mt-2 tracking-tight ${color}`}>
                 {loading ? "—" : value}
@@ -167,7 +171,6 @@ function Clientes() {
         {/* TABLA */}
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
 
-          {/* Barra de herramientas */}
           <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <FaUsers className="text-orange-500" />
@@ -178,7 +181,6 @@ function Clientes() {
             </h2>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              {/* Filtro por rol */}
               <select
                 value={filtroRol}
                 onChange={(e) => setFiltroRol(e.target.value)}
@@ -189,15 +191,14 @@ function Clientes() {
                 <option value="admin">Administradores</option>
               </select>
 
-              {/* Buscador */}
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                 <input
                   type="text"
-                  placeholder="Buscar por nombre o correo..."
+                  placeholder="Buscar por nombre, correo o teléfono..."
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  className="pl-9 pr-9 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none w-full sm:w-64"
+                  className="pl-9 pr-9 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none w-full sm:w-72"
                 />
                 {busqueda && (
                   <button
@@ -211,7 +212,6 @@ function Clientes() {
             </div>
           </div>
 
-          {/* Contenido */}
           <div className="overflow-x-auto">
             {loading ? (
               <div className="p-12 text-center">
@@ -229,6 +229,7 @@ function Clientes() {
                   <tr>
                     <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Usuario</th>
                     <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Correo</th>
+                    <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Teléfono</th>
                     <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Rol</th>
                     <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Estado</th>
                     <th className="text-center py-4 px-6 text-slate-500 text-sm font-semibold">Acciones</th>
@@ -241,7 +242,6 @@ function Clientes() {
                       className="border-t border-slate-100 hover:bg-orange-50/40 transition-colors cursor-pointer"
                       onClick={() => setClienteSeleccionado(cliente)}
                     >
-                      {/* Avatar + nombre */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
@@ -255,21 +255,26 @@ function Clientes() {
                               {cliente.nombre || "Sin nombre"}
                             </p>
                             <p className="text-slate-400 text-xs">
-                              ID: {cliente.id.slice(0, 8)}...
+                              {cliente.direccion || "Sin dirección"}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      {/* Correo */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2 text-slate-600 text-sm">
                           <FaEnvelope className="text-slate-300 shrink-0" />
-                          {cliente.email || "Sin correo"}
+                          {cliente.correo || "Sin correo"}
                         </div>
                       </td>
 
-                      {/* Rol */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2 text-slate-600 text-sm">
+                          <FaPhone className="text-slate-300 shrink-0" />
+                          {cliente.telefono || "—"}
+                        </div>
+                      </td>
+
                       <td className="py-4 px-6">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           cliente.rol === "admin"
@@ -280,7 +285,6 @@ function Clientes() {
                         </span>
                       </td>
 
-                      {/* Estado */}
                       <td className="py-4 px-6">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           cliente.activo !== false
@@ -291,12 +295,10 @@ function Clientes() {
                         </span>
                       </td>
 
-                      {/* Acciones */}
                       <td className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => toggleEstado(cliente.id, cliente.activo !== false)}
-                            title={cliente.activo !== false ? "Desactivar" : "Activar"}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
                               cliente.activo !== false
                                 ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
@@ -311,7 +313,6 @@ function Clientes() {
 
                           <button
                             onClick={() => cambiarRol(cliente.id, cliente.rol)}
-                            title="Cambiar rol"
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 transition-all"
                           >
                             <FaUserShield />
@@ -323,7 +324,6 @@ function Clientes() {
                               setIdEliminar(cliente.id);
                               setMostrarEliminar(true);
                             }}
-                            title="Eliminar"
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 flex items-center gap-1 transition-all"
                           >
                             <FaTrashAlt />
@@ -339,7 +339,7 @@ function Clientes() {
         </div>
       </div>
 
-      {/* MODAL DETALLE CLIENTE */}
+      {/* MODAL DETALLE */}
       {clienteSeleccionado && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
@@ -370,20 +370,23 @@ function Clientes() {
                 <p className="font-black text-slate-900 text-lg">
                   {clienteSeleccionado.nombre || "Sin nombre"}
                 </p>
-                <p className="text-slate-500 text-sm">{clienteSeleccionado.email}</p>
+                <p className="text-slate-500 text-sm">{clienteSeleccionado.correo}</p>
               </div>
             </div>
 
             <div className="space-y-3 bg-slate-50 rounded-2xl p-4 mb-6">
               {[
-                { label: "ID", value: clienteSeleccionado.id },
-                { label: "Rol", value: clienteSeleccionado.rol || "cliente" },
-                { label: "Estado", value: clienteSeleccionado.activo !== false ? "Activo" : "Inactivo" },
-                { label: "Correo", value: clienteSeleccionado.email || "—" },
+                { label: "UID",       value: clienteSeleccionado.uid || clienteSeleccionado.id },
+                { label: "Rol",       value: clienteSeleccionado.rol || "cliente" },
+                { label: "Estado",    value: clienteSeleccionado.activo !== false ? "Activo" : "Inactivo" },
+                { label: "Teléfono",  value: clienteSeleccionado.telefono || "—" },
+                { label: "Dirección", value: clienteSeleccionado.direccion || "—" },
+                { label: "Registro",  value: clienteSeleccionado.fechaRegistro?.toDate?.()
+                    ?.toLocaleDateString("es-MX") || "—" },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between text-sm">
                   <span className="text-slate-400 font-medium">{label}</span>
-                  <span className="text-slate-700 font-semibold">{value}</span>
+                  <span className="text-slate-700 font-semibold text-right max-w-[60%] truncate">{value}</span>
                 </div>
               ))}
             </div>
