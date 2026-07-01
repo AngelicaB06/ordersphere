@@ -1,342 +1,462 @@
 import Layout from "../components/Layout";
 import { useEffect, useState } from "react";
-
 import {
-  obtenerCategorias
-} from "../firebase/categorias";
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy
+} from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
+import {
+  FaUsers,
+  FaSearch,
+  FaTimes,
+  FaTrashAlt,
+  FaToggleOn,
+  FaToggleOff,
+  FaExclamationTriangle,
+  FaEnvelope,
+  FaUserShield,
+  FaUserAlt
+} from "react-icons/fa";
 
-function Categorias() {
+function Clientes() {
 
-  // =====================================
-  // ESTADOS
-  // =====================================
+  const [clientes, setClientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [mostrarEliminar, setMostrarEliminar] = useState(false);
+  const [idEliminar, setIdEliminar] = useState(null);
+  const [filtroRol, setFiltroRol] = useState("todos");
 
-  const [categorias, setCategorias] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [busqueda, setBusqueda] =
-    useState("");
-
-  // =====================================
-  // CARGAR CATEGORÍAS
-  // =====================================
-
+  // ===========================
+  // CARGAR CLIENTES
+  // ===========================
   useEffect(() => {
-
-    cargarCategorias();
-
+    cargarClientes();
   }, []);
 
-  const cargarCategorias = async () => {
-
+  const cargarClientes = async () => {
     try {
-
-      const data =
-        await obtenerCategorias();
-
-      console.log(
-        "Categorías:",
-        data
-      );
-
-      setCategorias(data);
-
+      setLoading(true);
+      const q = query(collection(db, "usuarios"), orderBy("email"));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setClientes(data);
     } catch (error) {
-
-      console.error(
-        "Error cargando categorías",
-        error
-      );
-
+      console.error("Error cargando clientes:", error);
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-  // =====================================
-  // FILTRAR CATEGORÍAS
-  // =====================================
+  // ===========================
+  // FILTRAR
+  // ===========================
+  const clientesFiltrados = clientes.filter((c) => {
+    const texto = busqueda.toLowerCase();
+    const coincideTexto =
+      c.email?.toLowerCase().includes(texto) ||
+      c.nombre?.toLowerCase().includes(texto);
+    const coincideRol =
+      filtroRol === "todos" ||
+      c.rol === filtroRol;
+    return coincideTexto && coincideRol;
+  });
 
-  const categoriasFiltradas =
-    categorias.filter((categoria) =>
+  // ===========================
+  // CAMBIAR ROL
+  // ===========================
+  const cambiarRol = async (id, rolActual) => {
+    const nuevoRol = rolActual === "admin" ? "cliente" : "admin";
+    try {
+      await updateDoc(doc(db, "usuarios", id), { rol: nuevoRol });
+      setClientes((prev) =>
+        prev.map((c) => c.id === id ? { ...c, rol: nuevoRol } : c)
+      );
+      if (clienteSeleccionado?.id === id) {
+        setClienteSeleccionado((prev) => ({ ...prev, rol: nuevoRol }));
+      }
+    } catch (error) {
+      console.error("Error cambiando rol:", error);
+    }
+  };
 
-      (categoria.nombre || "")
-        .toLowerCase()
-        .includes(
-          busqueda.toLowerCase()
-        )
+  // ===========================
+  // ACTIVAR / DESACTIVAR
+  // ===========================
+  const toggleEstado = async (id, estadoActual) => {
+    const nuevoEstado = !estadoActual;
+    try {
+      await updateDoc(doc(db, "usuarios", id), { activo: nuevoEstado });
+      setClientes((prev) =>
+        prev.map((c) => c.id === id ? { ...c, activo: nuevoEstado } : c)
+      );
+      if (clienteSeleccionado?.id === id) {
+        setClienteSeleccionado((prev) => ({ ...prev, activo: nuevoEstado }));
+      }
+    } catch (error) {
+      console.error("Error cambiando estado:", error);
+    }
+  };
 
-    );
+  // ===========================
+  // ELIMINAR
+  // ===========================
+  const eliminarCliente = async (id) => {
+    try {
+      await deleteDoc(doc(db, "usuarios", id));
+      setClientes((prev) => prev.filter((c) => c.id !== id));
+      if (clienteSeleccionado?.id === id) setClienteSeleccionado(null);
+    } catch (error) {
+      console.error("Error eliminando cliente:", error);
+    }
+  };
+
+  // ===========================
+  // ESTADÍSTICAS
+  // ===========================
+  const total = clientes.length;
+  const activos = clientes.filter((c) => c.activo !== false).length;
+  const admins = clientes.filter((c) => c.rol === "admin").length;
+  const inactivos = clientes.filter((c) => c.activo === false).length;
 
   return (
-
     <Layout>
-
       <div className="min-h-screen bg-slate-50 p-8">
 
-        {/* =====================================
-            HERO
-        ===================================== */}
-
-        <div
-          className="
-            bg-gradient-to-r
-            from-orange-500
-            to-orange-600
-            rounded-3xl
-            p-8
-            text-white
-            mb-8
-            shadow-lg
-          "
-        >
-
-          <h2 className="text-4xl font-bold">
-            🗂️ Gestión de Categorías
-          </h2>
-
-          <p className="mt-3 text-orange-100 text-lg">
-            Organiza tus productos por categorías.
-          </p>
-
+        {/* HEADER */}
+        <div className="bg-linear-to-r from-orange-500 to-orange-600 rounded-3xl p-8 text-white mb-8 shadow-lg">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-4 rounded-2xl">
+              <FaUsers className="text-5xl" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold">Gestión de Clientes</h1>
+              <p className="mt-2 text-orange-100 text-lg">
+                Administra los usuarios registrados en OrderSphere.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* =====================================
-            ESTADÍSTICAS
-        ===================================== */}
-
-        <div
-          className="
-            grid
-            grid-cols-1
-            md:grid-cols-3
-            gap-6
-            mb-8
-          "
-        >
-
-          {/* TOTAL */}
-
-          <div className="bg-white rounded-3xl p-6 shadow">
-
-            <h3 className="text-slate-500">
-              Total Categorías
-            </h3>
-
-            <p className="text-4xl font-bold text-orange-500 mt-2">
-
-              {categorias.length}
-
-            </p>
-
-          </div>
-
-          {/* ACTIVAS */}
-
-          <div className="bg-white rounded-3xl p-6 shadow">
-
-            <h3 className="text-slate-500">
-              Activas
-            </h3>
-
-            <p className="text-4xl font-bold text-green-500 mt-2">
-
-              {
-                categorias.filter(
-                  (c) =>
-                    c.estado === true
-                ).length
-              }
-
-            </p>
-
-          </div>
-
-          {/* OCULTAS */}
-
-          <div className="bg-white rounded-3xl p-6 shadow">
-
-            <h3 className="text-slate-500">
-              Ocultas
-            </h3>
-
-            <p className="text-4xl font-bold text-yellow-500 mt-2">
-
-              {
-                categorias.filter(
-                  (c) =>
-                    c.estado === false
-                ).length
-              }
-
-            </p>
-
-          </div>
-
+        {/* ESTADÍSTICAS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: "Total Usuarios",  value: total,    color: "text-orange-500", bg: "border-orange-200" },
+            { label: "Activos",         value: activos,  color: "text-green-500",  bg: "border-green-200"  },
+            { label: "Inactivos",       value: inactivos,color: "text-red-400",    bg: "border-red-200"    },
+            { label: "Administradores", value: admins,   color: "text-blue-500",   bg: "border-blue-200"   },
+          ].map(({ label, value, color, bg }) => (
+            <div key={label} className={`bg-white rounded-2xl p-6 shadow-sm border-l-4 ${bg}`}>
+              <p className="text-slate-500 text-sm font-medium">{label}</p>
+              <p className={`text-4xl font-black mt-2 tracking-tight ${color}`}>
+                {loading ? "—" : value}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {/* =====================================
-            TABLA
-        ===================================== */}
+        {/* TABLA */}
+        <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
 
-        <div className="bg-white rounded-3xl p-6 shadow">
+          {/* Barra de herramientas */}
+          <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FaUsers className="text-orange-500" />
+              Lista de Usuarios
+              <span className="text-sm font-normal text-slate-400 ml-1">
+                ({clientesFiltrados.length})
+              </span>
+            </h2>
 
-          <div
-            className="
-              flex
-              justify-between
-              items-center
-              mb-6
-            "
-          >
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              {/* Filtro por rol */}
+              <select
+                value={filtroRol}
+                onChange={(e) => setFiltroRol(e.target.value)}
+                className="border border-slate-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none bg-white"
+              >
+                <option value="todos">Todos los roles</option>
+                <option value="cliente">Clientes</option>
+                <option value="admin">Administradores</option>
+              </select>
 
-            <h3 className="text-2xl font-bold">
-              📋 Lista de Categorías
-            </h3>
-
-            <input
-              type="text"
-              placeholder="Buscar categoría..."
-              value={busqueda}
-              onChange={(e) =>
-                setBusqueda(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-xl
-                px-4
-                py-2
-              "
-            />
-
-          </div>
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full">
-
-              <thead>
-
-                <tr className="border-b">
-
-                  <th className="text-left py-3">
-                    Nombre
-                  </th>
-
-                  <th className="text-left py-3">
-                    Productos
-                  </th>
-
-                  <th className="text-left py-3">
-                    Estado
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {loading ? (
-
-                  <tr>
-
-                    <td
-                      colSpan="3"
-                      className="
-                        text-center
-                        py-8
-                      "
-                    >
-                      Cargando categorías...
-                    </td>
-
-                  </tr>
-
-                ) : (
-
-                  categoriasFiltradas.map(
-                    (categoria) => (
-
-                      <tr
-                        key={categoria.id}
-                        className="
-                          border-b
-                          hover:bg-slate-50
-                        "
-                      >
-
-                        {/* NOMBRE */}
-
-                        <td className="py-4 font-semibold">
-
-                          {categoria.nombre}
-
-                        </td>
-
-                        {/* PRODUCTOS */}
-
-                        <td>
-
-                          {
-                            categoria.productos || 0
-                          }
-
-                        </td>
-
-                        {/* ESTADO */}
-
-                        <td>
-
-                          <span
-                            className={
-                              categoria.estado
-
-                                ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-
-                                : "bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm"
-                            }
-                          >
-
-                            {
-                              categoria.estado
-                                ? "Activa"
-                                : "Oculta"
-                            }
-
-                          </span>
-
-                        </td>
-
-                      </tr>
-
-                    )
-                  )
-
+              {/* Buscador */}
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o correo..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="pl-9 pr-9 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none w-full sm:w-64"
+                />
+                {busqueda && (
+                  <button
+                    onClick={() => setBusqueda("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <FaTimes size={12} />
+                  </button>
                 )}
-
-              </tbody>
-
-            </table>
-
+              </div>
+            </div>
           </div>
 
-        </div>
+          {/* Contenido */}
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="p-12 text-center">
+                <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-3" />
+                <p className="text-slate-400">Cargando usuarios...</p>
+              </div>
+            ) : clientesFiltrados.length === 0 ? (
+              <div className="p-12 text-center text-slate-400">
+                <FaUsers className="text-5xl mx-auto mb-3 opacity-20" />
+                <p>No se encontraron usuarios.</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Usuario</th>
+                    <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Correo</th>
+                    <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Rol</th>
+                    <th className="text-left py-4 px-6 text-slate-500 text-sm font-semibold">Estado</th>
+                    <th className="text-center py-4 px-6 text-slate-500 text-sm font-semibold">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clientesFiltrados.map((cliente) => (
+                    <tr
+                      key={cliente.id}
+                      className="border-t border-slate-100 hover:bg-orange-50/40 transition-colors cursor-pointer"
+                      onClick={() => setClienteSeleccionado(cliente)}
+                    >
+                      {/* Avatar + nombre */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                            {cliente.rol === "admin"
+                              ? <FaUserShield className="text-orange-500" />
+                              : <FaUserAlt className="text-orange-400" />
+                            }
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-800 text-sm">
+                              {cliente.nombre || "Sin nombre"}
+                            </p>
+                            <p className="text-slate-400 text-xs">
+                              ID: {cliente.id.slice(0, 8)}...
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
+                      {/* Correo */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2 text-slate-600 text-sm">
+                          <FaEnvelope className="text-slate-300 shrink-0" />
+                          {cliente.email || "Sin correo"}
+                        </div>
+                      </td>
+
+                      {/* Rol */}
+                      <td className="py-4 px-6">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          cliente.rol === "admin"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-orange-100 text-orange-700"
+                        }`}>
+                          {cliente.rol === "admin" ? "Admin" : "Cliente"}
+                        </span>
+                      </td>
+
+                      {/* Estado */}
+                      <td className="py-4 px-6">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          cliente.activo !== false
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}>
+                          {cliente.activo !== false ? "● Activo" : "● Inactivo"}
+                        </span>
+                      </td>
+
+                      {/* Acciones */}
+                      <td className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => toggleEstado(cliente.id, cliente.activo !== false)}
+                            title={cliente.activo !== false ? "Desactivar" : "Activar"}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                              cliente.activo !== false
+                                ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                : "bg-green-100 text-green-700 hover:bg-green-200"
+                            }`}
+                          >
+                            {cliente.activo !== false
+                              ? <><FaToggleOff /> Desactivar</>
+                              : <><FaToggleOn /> Activar</>
+                            }
+                          </button>
+
+                          <button
+                            onClick={() => cambiarRol(cliente.id, cliente.rol)}
+                            title="Cambiar rol"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center gap-1 transition-all"
+                          >
+                            <FaUserShield />
+                            {cliente.rol === "admin" ? "→ Cliente" : "→ Admin"}
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setIdEliminar(cliente.id);
+                              setMostrarEliminar(true);
+                            }}
+                            title="Eliminar"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-600 hover:bg-red-200 flex items-center gap-1 transition-all"
+                          >
+                            <FaTrashAlt />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* MODAL DETALLE CLIENTE */}
+      {clienteSeleccionado && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setClienteSeleccionado(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-2xl font-black text-slate-900">Detalle del usuario</h3>
+              <button
+                onClick={() => setClienteSeleccionado(null)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <FaTimes className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+                {clienteSeleccionado.rol === "admin"
+                  ? <FaUserShield className="text-orange-500 text-2xl" />
+                  : <FaUserAlt className="text-orange-400 text-2xl" />
+                }
+              </div>
+              <div>
+                <p className="font-black text-slate-900 text-lg">
+                  {clienteSeleccionado.nombre || "Sin nombre"}
+                </p>
+                <p className="text-slate-500 text-sm">{clienteSeleccionado.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 bg-slate-50 rounded-2xl p-4 mb-6">
+              {[
+                { label: "ID", value: clienteSeleccionado.id },
+                { label: "Rol", value: clienteSeleccionado.rol || "cliente" },
+                { label: "Estado", value: clienteSeleccionado.activo !== false ? "Activo" : "Inactivo" },
+                { label: "Correo", value: clienteSeleccionado.email || "—" },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between text-sm">
+                  <span className="text-slate-400 font-medium">{label}</span>
+                  <span className="text-slate-700 font-semibold">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => toggleEstado(clienteSeleccionado.id, clienteSeleccionado.activo !== false)}
+                className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+                  clienteSeleccionado.activo !== false
+                    ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                }`}
+              >
+                {clienteSeleccionado.activo !== false
+                  ? <><FaToggleOff /> Desactivar</>
+                  : <><FaToggleOn /> Activar</>
+                }
+              </button>
+              <button
+                onClick={() => cambiarRol(clienteSeleccionado.id, clienteSeleccionado.rol)}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center justify-center gap-2 transition-all"
+              >
+                <FaUserShield />
+                {clienteSeleccionado.rol === "admin" ? "→ Cliente" : "→ Admin"}
+              </button>
+              <button
+                onClick={() => {
+                  setIdEliminar(clienteSeleccionado.id);
+                  setClienteSeleccionado(null);
+                  setMostrarEliminar(true);
+                }}
+                className="py-2.5 px-4 rounded-xl font-bold text-sm bg-red-100 text-red-600 hover:bg-red-200 flex items-center gap-2 transition-all"
+              >
+                <FaTrashAlt />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR */}
+      {mostrarEliminar && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl">
+            <h3 className="text-2xl font-bold mb-3 flex items-center gap-2">
+              <FaExclamationTriangle className="text-red-500" />
+              Eliminar usuario
+            </h3>
+            <p className="text-slate-500 mb-6">
+              ¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setMostrarEliminar(false)}
+                className="bg-slate-200 hover:bg-slate-300 px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-1 transition-colors"
+              >
+                <FaTimes /> Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await eliminarCliente(idEliminar);
+                  setMostrarEliminar(false);
+                }}
+                className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-1 transition-colors"
+              >
+                <FaTrashAlt /> Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
-
   );
-
 }
 
-export default Categorias;
+export default Clientes;
