@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 
-// Importamos los iconos necesarios
-import { 
-  FaHamburger, 
-  FaEdit, 
-  FaPlus, 
-  FaBox, 
-  FaExclamationTriangle, 
-  FaCheck, 
-  FaSave, 
+import {
+  FaHamburger,
+  FaEdit,
+  FaPlus,
+  FaBox,
+  FaExclamationTriangle,
+  FaCheck,
+  FaSave,
   FaTrashAlt,
   FaTimes,
   FaSearch
@@ -22,19 +21,18 @@ import {
   actualizarProducto
 } from "../firebase/productos";
 
+import { obtenerCategorias } from "../firebase/categorias";
+
 function Productos() {
 
-  // ===========================
-  // ESTADOS
-  // ===========================
-
   const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [productoEditar, setProductoEditar] = useState(null);
   const [mostrarEliminar, setMostrarEliminar] = useState(false);
   const [mostrarGuardar, setMostrarGuardar] = useState(false);
   const [mostrarActualizar, setMostrarActualizar] = useState(false);
   const [idEliminar, setIdEliminar] = useState(null);
-  const [busqueda, setBusqueda] = useState(""); // <--- NUEVO estado para búsqueda
+  const [busqueda, setBusqueda] = useState("");
 
   const [formulario, setFormulario] = useState({
     nombre: "",
@@ -47,7 +45,6 @@ function Productos() {
   // ===========================
   // CARGAR PRODUCTOS
   // ===========================
-
   useEffect(() => {
     cargarProductos();
   }, []);
@@ -62,28 +59,27 @@ function Productos() {
   };
 
   // ===========================
-  // CATEGORÍAS ÚNICAS EXISTENTES (para el select)
+  // CARGAR CATEGORÍAS DESDE FIRESTORE
   // ===========================
-
-  const categoriasExistentes = useMemo(() => {
-    const set = new Set();
-    productos.forEach((p) => {
-      if (p.categoria && p.categoria.trim()) {
-        set.add(p.categoria.trim());
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        const data = await obtenerCategorias();
+        setCategorias(data);
+      } catch (error) {
+        console.error("Error cargando categorías:", error);
       }
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [productos]);
+    };
+    cargarCategorias();
+  }, []);
 
   // ===========================
-  // FILTRADO DE PRODUCTOS (memoizado)
+  // FILTRADO DE PRODUCTOS
   // ===========================
-
   const productosFiltrados = useMemo(() => {
     if (!busqueda.trim()) return productos;
-
     const texto = busqueda.toLowerCase().trim();
-    return productos.filter(producto =>
+    return productos.filter((producto) =>
       producto.nombre?.toLowerCase().includes(texto) ||
       producto.categoria?.toLowerCase().includes(texto) ||
       producto.descripcion?.toLowerCase().includes(texto)
@@ -93,7 +89,6 @@ function Productos() {
   // ===========================
   // GUARDAR O ACTUALIZAR
   // ===========================
-
   const guardarProducto = async () => {
     try {
       if (productoEditar) {
@@ -134,7 +129,6 @@ function Productos() {
   // ===========================
   // EDITAR
   // ===========================
-
   const editarProducto = (producto) => {
     setProductoEditar(producto);
     setFormulario({
@@ -144,16 +138,12 @@ function Productos() {
       categoria: producto.categoria || "",
       imagen: producto.imagen || ""
     });
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ===========================
   // ELIMINAR
   // ===========================
-
   const borrarProducto = async (id) => {
     try {
       await eliminarProducto(id);
@@ -168,7 +158,7 @@ function Productos() {
       <div className="min-h-screen bg-slate-50 p-8">
 
         {/* HEADER */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-3xl p-8 text-white mb-8 flex items-center gap-3">
+        <div className="bg-linear-to-r from-orange-500 to-orange-600 rounded-3xl p-8 text-white mb-8 flex items-center gap-3">
           <FaHamburger className="text-5xl" />
           <div>
             <h1 className="text-4xl font-bold">Gestión de Productos</h1>
@@ -212,7 +202,7 @@ function Productos() {
               className="border p-3 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none"
             />
 
-            {/* Campo de categoría: SOLO selección de categorías existentes */}
+            {/* Categorías desde Firestore */}
             <select
               value={formulario.categoria}
               onChange={(e) =>
@@ -221,9 +211,9 @@ function Productos() {
               className="border p-3 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none bg-white text-slate-700"
             >
               <option value="">Selecciona una categoría</option>
-              {categoriasExistentes.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categorias.map((cat) => (
+                <option key={cat.id} value={cat.nombre}>
+                  {cat.nombre}
                 </option>
               ))}
             </select>
@@ -249,6 +239,19 @@ function Productos() {
             className="w-full border p-3 rounded-xl mt-4 focus:ring-2 focus:ring-orange-400 outline-none"
           />
 
+          {/* Vista previa imagen */}
+          {formulario.imagen && (
+            <div className="mt-4">
+              <p className="text-sm text-slate-500 mb-2">Vista previa:</p>
+              <img
+                src={formulario.imagen}
+                alt="Preview"
+                className="w-32 h-32 rounded-xl object-cover border border-slate-200"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            </div>
+          )}
+
           <button
             onClick={() => {
               if (productoEditar) {
@@ -269,6 +272,18 @@ function Productos() {
               </>
             )}
           </button>
+
+          {productoEditar && (
+            <button
+              onClick={() => {
+                setProductoEditar(null);
+                setFormulario({ nombre: "", descripcion: "", precio: "", categoria: "", imagen: "" });
+              }}
+              className="mt-3 ml-3 bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 rounded-xl flex items-center gap-2 transition-colors"
+            >
+              <FaTimes /> Cancelar edición
+            </button>
+          )}
         </div>
 
         {/* TABLA CON BUSCADOR */}
@@ -278,11 +293,10 @@ function Productos() {
               <FaBox className="text-indigo-500" />
               Lista de Productos
               <span className="text-sm font-normal text-slate-500 ml-2">
-                ({productosFiltrados.length} {productosFiltrados.length === 1 ? 'producto' : 'productos'})
+                ({productosFiltrados.length} {productosFiltrados.length === 1 ? "producto" : "productos"})
               </span>
             </h2>
 
-            {/* Campo de búsqueda */}
             <div className="relative w-full md:w-72">
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -303,13 +317,14 @@ function Productos() {
             </div>
           </div>
 
-          {/* Tabla */}
           <div className="overflow-x-auto">
             {productosFiltrados.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 {busqueda ? (
                   <>
-                    <p className="text-lg">No se encontraron productos que coincidan con <strong>"{busqueda}"</strong></p>
+                    <p className="text-lg">
+                      No se encontraron productos que coincidan con <strong>"{busqueda}"</strong>
+                    </p>
                     <button
                       onClick={() => setBusqueda("")}
                       className="mt-2 text-orange-500 hover:underline"
@@ -334,12 +349,16 @@ function Productos() {
                 </thead>
                 <tbody>
                   {productosFiltrados.map((producto) => (
-                    <tr key={producto.id} className="border-b hover:bg-slate-50 transition-colors">
+                    <tr
+                      key={producto.id}
+                      className="border-b hover:bg-slate-50 transition-colors"
+                    >
                       <td className="py-3">
                         <img
                           src={producto.imagen || "https://picsum.photos/60"}
                           alt=""
                           className="w-14 h-14 rounded-xl object-cover"
+                          onError={(e) => { e.target.src = "https://picsum.photos/60"; }}
                         />
                       </td>
                       <td className="font-medium">{producto.nombre}</td>
@@ -377,10 +396,10 @@ function Productos() {
         </div>
       </div>
 
-      {/* MODALES (sin cambios) */}
+      {/* MODAL ELIMINAR */}
       {mostrarEliminar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-[400px]">
+          <div className="bg-white p-6 rounded-2xl w-100">
             <h2 className="text-2xl font-bold mb-3 flex items-center gap-2">
               <FaExclamationTriangle className="text-red-500" />
               Confirmar eliminación
@@ -407,9 +426,10 @@ function Productos() {
         </div>
       )}
 
+      {/* MODAL GUARDAR */}
       {mostrarGuardar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-8 w-[400px]">
+          <div className="bg-white rounded-3xl p-8 w-100">
             <h2 className="text-2xl font-bold mb-3 flex items-center gap-2">
               <FaCheck className="text-green-500" />
               Guardar Producto
@@ -436,9 +456,10 @@ function Productos() {
         </div>
       )}
 
+      {/* MODAL ACTUALIZAR */}
       {mostrarActualizar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-8 w-[400px]">
+          <div className="bg-white rounded-3xl p-8 w-100">
             <h2 className="text-2xl font-bold mb-3 flex items-center gap-2">
               <FaEdit className="text-blue-500" />
               Actualizar Producto
